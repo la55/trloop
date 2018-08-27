@@ -44,17 +44,17 @@
                   </table>
                 </td> 
                 <td> 
-                   <table>
-                     <div v-for="res in results">
-                      <tr>
-                         №: <th v-text="res.bib"></th>
-                      </tr>
-                      <tr v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
-                           <td v-text="time.pulse"></td>
-                           <td  v-if="dist == true" v-text="time.pulse * 125"></td>
-                           <td v-text="time.res"></td>
-                      </tr>
-                  </table>
+                   <div v-for="res in results">
+                     <table>
+                        <tr>
+                           <th>№: <span v-text="res.bib"></span></th>
+                        </tr>
+                        <tr v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
+                             <td v-text="time.pulse"></td>
+                             <td  v-if="dist == true" v-text="time.pulse * 125"></td>
+                             <td v-text="time.res"></td>
+                        </tr>
+                    </table>
                  </div>
                 </td> 
               </tr>
