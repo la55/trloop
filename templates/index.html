@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bib Time</title>
+    <script src="/static/vue.min.js"></script>
+</head>
+<body>
+<style>
+  
+</style>
+    <div id='root'>
+
+            <div v-if="onAir == 1" style="background:green;padding:0.3em;color:white">
+                Connected
+            </div>
+            <div v-if="onAir == 0" style="background:red;padding:0.3;color:white">
+                No connection
+            </div>
+            <div>
+              Show every:
+              <select v-model="pulse">
+                <option v-for="i in [1,2,4,8]" v-text="i">
+                </option>
+              </select>
+              <label for="checkbox">Dist:</label>
+              <input type="checkbox" id="dist" v-model="dist">
+            </div>
+            <table width="100%">
+              <tr>
+                <td> 
+                  <table>
+                      <tr>
+                         <td>Bib:</td>
+                         <td>P:</td>
+                         <td v-if="dist == true">D:</td>
+                         <td>Time</td>
+                      </tr>
+                      <tr v-for="time in times" v-if="time.pulse % pulse == 0">
+                           <td v-text="time.bib"></td>
+                           <td v-text="time.pulse"></td>
+                           <td  v-if="dist == true" v-text="time.pulse * 125"></td>
+                           <td v-text="time.res"></td>
+                      </tr>
+                  </table>
+                </td> 
+                <td> 
+                   <table>
+                     <div v-for="res in results">
+                      <tr>
+                         №: <th v-text="res.bib"></th>
+                      </tr>
+                      <tr v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
+                           <td v-text="time.pulse"></td>
+                           <td  v-if="dist == true" v-text="time.pulse * 125"></td>
+                           <td v-text="time.res"></td>
+                      </tr>
+                  </table>
+                 </div>
+                </td> 
+              </tr>
+            </table>
+        </div>
+    </div>
+<script>
+  var app = new Vue({
+    
+    el : '#root',
+
+    data: {
+        results: {},
+        times : [],
+        onAir : 0,
+        pulse : 1,
+        dist : true,
+    },
+
+    created: function () {
+      this.ws =  new WebSocket("ws://127.0.0.1:8080/socket");
+      this.ws.onopen = function(e) {
+        app.onAir = 1
+      }
+      this.ws.onclose = function(e) {
+        app.onAir = 0
+      }
+      this.ws.onmessage = function(e) {
+        message = JSON.parse(e.data);
+        if (message.action == 'result') {
+          let res = message.result
+          app.times.unshift(res)
+          if (res.key in app.results) {
+            app.results[res.key]['times'].push(res)
+            app.results[res.key]['bib'] = res.bib
+          } else {
+            app.results[res.key] = {}
+            app.results[res.key]['times'] = [res]
+          }
+        }
+      }
+    }
+
+  });
+</script>
+</body>
+</html>
+
