@@ -6,7 +6,7 @@
 </head>
 <body>
 <style>
-  
+ table { width: 100%; } 
 </style>
     <div id='root'>
 
@@ -25,7 +25,7 @@
               <label for="checkbox">Dist:</label>
               <input type="checkbox" id="dist" v-model="dist">
             </div>
-            <table width="100%">
+            <table>
               <tr>
                 <td> 
                   <table>
@@ -53,6 +53,7 @@
                              <td v-text="time.pulse"></td>
                              <td  v-if="dist == true" v-text="time.pulse * 125"></td>
                              <td v-text="time.res"></td>
+                             <td v-text="get_lap(time)"></td>
                         </tr>
                     </table>
                  </div>
@@ -67,7 +68,7 @@
     el : '#root',
 
     data: {
-        results: {},
+        results: [],
         times : [],
         onAir : 0,
         pulse : 1,
@@ -87,14 +88,54 @@
         if (message.action == 'result') {
           let res = message.result
           app.times.unshift(res)
-          if (res.key in app.results) {
-            app.results[res.key]['times'].push(res)
-            app.results[res.key]['bib'] = res.bib
+          results = app.results.filter(time => time.key == res.key && time.bib == res.bib)
+          if (results.length == 0) {
+            app.results.push({ 'key': res.key, 'bib': res.bib, 'times': [res] })
           } else {
-            app.results[res.key] = {}
-            app.results[res.key]['times'] = [res]
+            results[0]['bib'] = res.bib
+            results[0]['times'].push(res)
           }
         }
+      }
+    },
+
+    methods: {
+      get_lap : res => {
+        let pulse = parseInt(res.pulse) - app.pulse
+        let prev_res = 0 
+        try {
+          let prev_time = app.times.filter(time => time.key == res.key && time.pulse == pulse)[0]
+          prev_res = app.time_to_int(prev_time.res)
+        } catch {
+        }
+        return app.int_to_time(app.time_to_int(res.res) - prev_res)
+      }, 
+      time_to_int : time => {
+        let mills = time.match(/\d\d\d/g)
+        let seconds = time.match(/\d\d?,/g)
+        let minutes = time.match(/\d\d?\:/g)
+        if (mills != null) { mills = mills[0] } else { mills = 0}
+        if (seconds != null) { seconds = seconds[0].replace(',', '') } else { seconds = 0}
+        if (minutes != null) { minutes = minutes[0].replace(':', '') } else { minutes = 0}
+        let time_int = parseInt(minutes) * 60000 + parseInt(seconds) * 1000 + parseInt(mills)
+        return time_int
+      }, 
+      int_to_time : i_time => {
+        let minutes = i_time / 60000 >> 0
+        let sec_m = i_time % 60000
+        let seconds = sec_m / 1000 >> 0
+        let mills = sec_m % 1000
+        time = 'none'
+        if (minutes === 0) {
+            time = `${seconds},${mills}`
+        } else {
+          if (seconds < 10) {
+            time = `${minutes}:0${seconds},${mills}`
+          } else {
+            time = `${minutes}:${seconds},${mills}`
+          }
+        }
+        return time
       }
     }
 
