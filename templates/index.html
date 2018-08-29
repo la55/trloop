@@ -7,6 +7,7 @@
 <body>
 <style>
  table { width: 100%; } 
+ table th { text-align: left; } 
 </style>
     <div id='root'>
 
@@ -28,32 +29,24 @@
             <table>
               <tr>
                 <td> 
-                  <table>
-                      <tr>
-                         <td>Bib:</td>
-                         <td>P:</td>
-                         <td v-if="dist == true">D:</td>
-                         <td>Time</td>
-                      </tr>
-                      <tr v-for="time in times" v-if="time.pulse % pulse == 0">
-                           <td v-text="time.bib"></td>
-                           <td v-text="time.pulse"></td>
-                           <td  v-if="dist == true" v-text="time.pulse * 125"></td>
-                           <td v-text="time.res"></td>
-                      </tr>
-                  </table>
-                </td> 
-                <td> 
-                   <div v-for="res in results">
+                   <div>
                      <table>
                         <tr>
-                           <th>№: <span v-text="res.bib"></span></th>
+                           <th>№
+                           </th>
+                           <th v-for="i in 32" v-if="i % pulse == 0">
+                             <small><small><span v-text="i * 125"></span></small></small>
+                           </th>
                         </tr>
-                        <tr v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
-                             <td v-text="time.pulse"></td>
+                        <tr v-for="res in results">
+                          <td><big<span v-text="res.bib"></span></big></td>
+                          <td v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
+                             <!--<span v-text="time.pulse"></span>
                              <td  v-if="dist == true" v-text="time.pulse * 125"></td>
-                             <td v-text="time.res"></td>
-                             <td v-text="get_lap(time)"></td>
+                             <td v-text="get_lap(time, res)"></td>-->
+                             <span v-text="time.res"></span><br>
+                             <small><small><span v-text="get_lap(time, res)"></span></small></small>
+                          </td>
                         </tr>
                     </table>
                  </div>
@@ -87,10 +80,10 @@
         message = JSON.parse(e.data);
         if (message.action == 'result') {
           let res = message.result
-          app.times.unshift(res)
-          results = app.results.filter(time => time.key == res.key && time.bib == res.bib)
+          //app.times.unshift(res)
+          results = app.results.filter(time => time.key == res.key)
           if (results.length == 0) {
-            app.results.push({ 'key': res.key, 'bib': res.bib, 'times': [res] })
+            app.results.unshift({ 'key': res.key, 'bib': 'Start', 'times': [res] })
           } else {
             results[0]['bib'] = res.bib
             results[0]['times'].push(res)
@@ -100,15 +93,15 @@
     },
 
     methods: {
-      get_lap : res => {
-        let pulse = parseInt(res.pulse) - app.pulse
+      get_lap : (time, res) => {
+        let pulse = parseInt(time.pulse) - app.pulse
         let prev_res = 0 
         try {
-          let prev_time = app.times.filter(time => time.key == res.key && time.pulse == pulse)[0]
+          let prev_time = res.times.filter(time => time.key == res.key && time.pulse == pulse)[0]
           prev_res = app.time_to_int(prev_time.res)
         } catch {
         }
-        return app.int_to_time(app.time_to_int(res.res) - prev_res)
+        return app.int_to_time(app.time_to_int(time.res) - prev_res)
       }, 
       time_to_int : time => {
         let mills = time.match(/\d\d\d/g)
