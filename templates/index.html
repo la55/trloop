@@ -8,6 +8,7 @@
 <style>
  table { width: auto; } 
  table th { text-align: left; } 
+ table td { padding: 0.5em; } 
 </style>
     <div id='root'>
 
@@ -28,8 +29,6 @@
                 <option v-for="i in [1,2,4,8,16,24,32]" v-text="i">
                 </option>
               </select>
-              <label for="checkbox">Dist:</label>
-              <input type="checkbox" id="dist" v-model="dist">
             </div>
             <table>
               <tr>
@@ -40,15 +39,12 @@
                            <th>№
                            </th>
                            <th v-for="i in 32" v-if="i % pulse == 0" v-show="i <= max">
-                             <i><small><span v-text="i * 125"></span> </i>
+                             <i><small><span v-text="i * 125"></span>m</i>
                            </th>
                         </tr>
                         <tr v-for="res in results">
                           <td><big><strong><span v-text="res.bib"></span></strong></big></td>
                           <td v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
-                             <!--<span v-text="time.pulse"></span>
-                             <td  v-if="dist == true" v-text="time.pulse * 125"></td>
-                             <td v-text="get_lap(time, res)"></td>-->
                              <span v-text="time.res"></span><br>
                              <small><small><span v-text="get_lap(time, res)"></span></small></small>
                           </td>
@@ -67,11 +63,9 @@
 
     data: {
         results: [],
-        times : [],
         onAir : 0,
         pulse : 1,
         max : 32,
-        dist : true,
     },
 
     created: function () {
@@ -86,7 +80,6 @@
         message = JSON.parse(e.data);
         if (message.action == 'result') {
           let res = message.result
-          //app.times.unshift(res)
           results = app.results.filter(time => time.key == res.key)
           if (results.length == 0) {
             app.results.unshift({ 'key': res.key, 'bib': 'Start', 'times': [res] })
