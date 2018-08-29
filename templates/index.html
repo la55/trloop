@@ -9,26 +9,30 @@
  table { width: auto; } 
  table th { text-align: left; } 
  table td { padding: 0.5em; } 
+ .settings { font-size: 0.7em; }
+  select {font-size: 0.8em;  }
 </style>
     <div id='root'>
 
-            <div v-if="onAir == 1" style="background:green;padding:0.3em;color:white">
-                Connected
-            </div>
-            <div v-if="onAir == 0" style="background:red;padding:0.3;color:white">
-                No connection
-            </div>
-            <div>
-              Show every:
-              <select v-model="pulse">
-                <option v-for="i in [1,2,4,8]" v-text="i">
-                </option>
-              </select>
-              Max:
-              <select v-model="max">
-                <option v-for="i in [1,2,4,8,16,24,32]" v-text="i">
-                </option>
-              </select>
+            <div class="settings">
+              <div v-if="onAir == 1" style="background:green;padding:0.3em;color:white">
+                  Connected
+              </div>
+              <div v-if="onAir == 0" style="background:red;padding:0.3;color:white">
+                  No connection
+              </div>
+              <div>
+                Show every:
+                <select v-model="pulse">
+                  <option v-for="i in [1,2,4,8]" v-text="i">
+                  </option>
+                </select>
+                Max:
+                <select v-model="max">
+                  <option v-for="i in [1,2,4,8,16,24,32]" v-text="i">
+                  </option>
+                </select>
+              </div>
             </div>
             <table>
               <tr>
