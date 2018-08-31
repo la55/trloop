@@ -37,8 +37,8 @@ def getData(q):
             break
         try:
             to_print = re.findall(pattern_res, data.decode())
-            if len(to_print) > 0:
-                print(data)
+            #if len(to_print) > 0:
+                #print(data)
             data = re.findall(pattern_data, data.decode())
         except:
             data = []
@@ -62,6 +62,7 @@ def getData(q):
                 results = {'key': key, 'res': res, 'bib': bib, 'pulse': pulse}
                 m_dict = { 'action': 'result', 'result': results }
                 q.put(m_dict)
+                print("Thread 1: pull data from socket: {} - {}".format(pulse, res))
 
     getData(q)
 
@@ -70,10 +71,8 @@ def sendToAll(q):
         while not q.empty():
             m_dict = q.get()
             msg = json.dumps(m_dict)
-            print(connections)
-            print(msg)
-            [con.write_message(msg) for con in connections]
-        time.sleep(0.5)
+            [(con.write_message(msg), print("Thread 2: push to web: {}".format(con))) for con in connections]
+        time.sleep(0.1)
 
 class WebSocketHandler(WebSocketHandler):
 
@@ -128,4 +127,4 @@ if __name__ == '__main__':
     for w in workers:
         w.daemon = True
         w.start()
-    IOLoop.current().start()
+    IOLoop.instance().start()
