@@ -23,7 +23,7 @@ s.listen(1)
 print('listened')
 
 #@gen.coroutine
-def getData(q):
+def getData():
     conn, addr = s.accept()
     print('accepted')
 
@@ -64,9 +64,9 @@ def getData(q):
                 q.put(m_dict)
                 print("Thread 1: pull data from socket: {} - {}".format(pulse, res))
 
-    getData(q)
+    getData()
 
-def sendToAll(q):
+def sendToAll():
     while True:
         while not q.empty():
             m_dict = q.get()
@@ -121,8 +121,8 @@ if __name__ == '__main__':
 
     from threading import Thread
     workers = [
-        Thread(target=getData, args=(q,)),
-        Thread(target=sendToAll, args=(q,)),
+        Thread(target=getData),
+        Thread(target=sendToAll),
     ]
     for w in workers:
         w.daemon = True

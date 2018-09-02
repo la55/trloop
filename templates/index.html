@@ -3,15 +3,17 @@
 <head>
     <title>Bib Time</title>
     <script src="/static/vue.min.js"></script>
+    <script src="/static/vue-clipboard.min.js"></script>
 </head>
-<body>
 <style>
+ body {background-color: #000; color: #fff; }
  table { width: auto; } 
  table th { text-align: left; } 
  table td { padding: 0.5em; } 
  .settings { margin-bottom: -100px; float: right; font-size: 0.7em; }
   select {font-size: 0.8em;  }
 </style>
+<body>
     <div id='root'>
 
             <div class="settings">
@@ -49,8 +51,8 @@
                         <tr v-for="res in results">
                           <td><big><strong><span v-text="res.bib"></span></strong></big></td>
                           <td v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
-                             <span v-text="time.res"></span><br>
-                             <small><small><span v-text="get_lap(time, res)"></span></small></small>
+                             <span v-text="time.res" @click="doCopy(time.res)"></span><br>
+                             <small><small><span v-text="get_lap(time, res)" @click="doCopy(get_lap(time, res))"></span></small></small>
                           </td>
                         </tr>
                     </table>
@@ -96,6 +98,13 @@
     },
 
     methods: {
+      doCopy: function (res) {
+        this.$copyText(res).then(function (e) {
+          alert(`Copied ${res}`)
+        }, function (e) {
+          alert('Can not copy')
+        })
+      },
       get_lap : (time, res) => {
         let pulse = parseInt(time.pulse) - app.pulse
         let prev_res = 0 
