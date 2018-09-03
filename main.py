@@ -16,46 +16,31 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 connections = set() #set of websocket "clients"
 
+pattern_data = re.compile(b'\|[0-9\. ]*\|[0-9\. ]*\|[0-9\. ]*\|[0-9\. ]*\|[0-9\.\:\| ]*')
+pattern_res = re.compile('\d\d?:\d\d\.\d\d\d|\d\d?\.\d\d\d')
+key = 'default'
+
 s = socket.socket()
 s.bind(('', 6100))
 print('binded')
 s.listen(1)
 print('listened')
 
-#@gen.coroutine
 def getData():
     conn, addr = s.accept()
     print('accepted')
 
-    pattern_data = '\|[0-9\. ]*\|[0-9\. ]*\|[0-9\. ]*\|[0-9\. ]*\|[0-9\.\:\| ]*'
-    pattern_res = '\d\d?:\d\d\.\d\d\d|\d\d?\.\d\d\d' 
-    key = 'default'
     while True:
-        #yield gen.sleep(0.000001)  #this prevent blocking and allow other client to connect
         data = conn.recv(1024)
         if not data:
             break
-        try:
-            to_print = re.findall(pattern_res, data.decode())
-            #if len(to_print) > 0:
-                #print(data)
-            data = re.findall(pattern_data, data.decode())
-        except:
-            data = []
-        for p_data in data:
-            try:
-                res = re.findall(pattern_res, p_data)[0]
-                res = res.replace('.', ',')
-            except:
-                res = 'nothing'
-            if res:
-                l_data = p_data.split('|')
-                ab = l_data[0].strip()
-                cd = l_data[1].strip()
-                ee = l_data[2].strip()
-                bib = l_data[4].strip()
-                pulse = l_data[3].strip()
-                if bib == '0':
+        for match in pattern_data.finditer(data):
+            p_data = match.group().decode()
+            res_match = pattern_res.search(p_data)
+            if res_match:
+                res = res_match.group().replace('.', ',')
+                ab, cd, ee, pulse, bib, *xx = p_data.split('|')
+                if bib.strip() == '0':
                     pulse = 0
                     key = '{}-{}-{}-{}'.format(res, ab, cd, ee)
                     res = 'start'
@@ -66,13 +51,17 @@ def getData():
 
     getData()
 
+#@gen.coroutine
 def sendToAll():
     while True:
-        while not q.empty():
-            m_dict = q.get()
-            msg = json.dumps(m_dict)
-            [(con.write_message(msg), print("Thread 2: push to web: {}".format(con))) for con in connections]
-        time.sleep(0.1)
+        if len(connections) > 0:
+            while not q.empty():
+                m_dict = q.get()
+                msg = json.dumps(m_dict)
+                [(con.write_message(msg), print("Thread 2: push to web: {}".format(con))) for con in connections]
+        #yield gen.sleep(0.01)  #this prevent blocking and allow other client to connect
+        time.sleep(0.01)
+
 
 class WebSocketHandler(WebSocketHandler):
 
