@@ -2,7 +2,7 @@ import time
 import socket
 
 s = socket.socket()
-s.connect(('', 6100))
+s.connect(('127.0.0.1', 6100))
 
 with open('out3.txt', 'rb') as f:
     for line in f:
