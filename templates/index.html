@@ -75,7 +75,7 @@
     },
 
     created: function () {
-      this.ws =  new WebSocket("ws://127.0.0.1:8080/socket");
+      this.ws =  new WebSocket("ws://192.168.0.5:8080/socket");
       this.ws.onopen = function(e) {
         app.onAir = 1
       }

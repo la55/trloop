@@ -116,4 +116,4 @@ if __name__ == '__main__':
     for w in workers:
         w.daemon = True
         w.start()
-    IOLoop.instance().start()
+    IOLoop.current().start()
