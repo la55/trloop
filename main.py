@@ -3,12 +3,16 @@ from tornado import gen
 from tornado.websocket import WebSocketHandler
 import tornado.httpserver
 import tornado.web
+from tornado.options import options, define
 import socket
 import json
 import os
 import re
 import queue
 import time
+
+define("host", default="localhost", help="app host", type=str)
+define("port", default=3000, help="app port", type=int)
 
 q = queue.Queue()
 
@@ -83,7 +87,10 @@ class WebSocketHandler(WebSocketHandler):
 class IndexPageHandler(tornado.web.RequestHandler):
 
     def get(self):
-        self.render("index.html")
+        self.render("index.html",
+            server_url=options.host,
+            server_port=options.port
+        )
        
  
 class Application(tornado.web.Application):
@@ -103,9 +110,10 @@ class Application(tornado.web.Application):
  
  
 if __name__ == '__main__':
+    options.parse_command_line()
     ws_app = Application()
     server = tornado.httpserver.HTTPServer(ws_app)
-    server.listen(8080)
+    server.listen(options.port)
     #IOLoop.current().spawn_callback(getData)
 
     from threading import Thread
