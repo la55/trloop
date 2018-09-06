@@ -75,11 +75,7 @@
     },
 
     created: function () {
-<<<<<<< HEAD
-      this.ws =  new WebSocket("ws://192.168.0.5:8080/socket");
-=======
       this.ws =  new WebSocket("ws://{{ server_url }}:{{ server_port }}/socket");
->>>>>>> 545a63b0f1a4d7cbb3ac44404818804e2827c0b6
       this.ws.onopen = function(e) {
         app.onAir = 1
       }
