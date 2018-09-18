@@ -12,7 +12,7 @@ import queue
 import time
 
 define("host", default="localhost", help="app host", type=str)
-define("port", default=3000, help="app port", type=int)
+define("port", default=8080, help="app port", type=int)
 
 q = queue.Queue()
 
@@ -22,7 +22,7 @@ connections = set() #set of websocket "clients"
 
 pattern_data = re.compile(b'\|[0-9\. ]*\|[0-9\. ]*\|[0-9\. ]*\|[0-9\. ]*\|[0-9\.\:\| ]*')
 pattern_res = re.compile('\d\d?:\d\d\.\d\d\d|\d\d?\.\d\d\d')
-key = 'default'
+tmpst = 'default'
 
 s = socket.socket()
 s.bind(('', 6100))
@@ -40,14 +40,15 @@ def getData():
             break
         for match in pattern_data.finditer(data):
             p_data = match.group().decode()
+            print(p_data)
             res_match = pattern_res.search(p_data)
             if res_match:
                 res = res_match.group().replace('.', ',')
                 ab, cd, ee, pulse, bib, *xx = p_data.split('|')
-                if bib.strip() == '0':
-                    pulse = 0
-                    key = '{}-{}-{}-{}'.format(res, ab, cd, ee)
-                    res = 'start'
+                if len(xx) < 2:
+                    tmpst = time.time()
+                    continue
+                key = '{}-{}'.format(tmpst, bib)
                 results = {'key': key, 'res': res, 'bib': bib, 'pulse': pulse}
                 m_dict = { 'action': 'result', 'result': results }
                 q.put(m_dict)
