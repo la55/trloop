@@ -39,15 +39,19 @@ def getData():
         if not data:
             break
         for match in pattern_data.finditer(data):
-            p_data = match.group().decode()
+            if not b'DI' or b'DF' in data:
+                continue
+            #p_data = match.group().decode()
+            p_data = data.decode()
             res_match = pattern_res.search(p_data)
             if res_match:
                 res = res_match.group().replace('.', ',')
                 ab, cd, ee, pulse, bib, *xx = p_data.split('|')
                 if bib.strip() == '0':
                     pulse = 0
-                    key = '{}-{}-{}-{}'.format(res, ab, cd, ee)
                     res = 'start'
+                    continue
+                key = bib
                 results = {'key': key, 'res': res, 'bib': bib, 'pulse': pulse}
                 m_dict = { 'action': 'result', 'result': results }
                 q.put(m_dict)
