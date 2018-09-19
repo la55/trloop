@@ -88,7 +88,7 @@
           let res = message.result
           results = app.results.filter(time => time.key == res.key)
           if (results.length == 0) {
-            app.results.unshift({ 'key': res.key, 'bib': 'Start', 'times': [res] })
+            app.results.unshift({ 'key': res.key, 'bib': res.bib, 'times': [res] })
           } else {
             results[0]['bib'] = res.bib
             results[0]['times'].push(res)
@@ -130,9 +130,13 @@
         let sec_m = i_time % 60000
         let seconds = sec_m / 1000 >> 0
         let mills = sec_m % 1000
+        let ms = mills.toString()
+        while (ms.length < 3) {
+          ms = '0' + ms
+        }
         time = 'none'
         if (minutes === 0) {
-            time = `${seconds},${mills}`
+            time = `${seconds},${ms}`
         } else {
           if (seconds < 10) {
             time = `${minutes}:0${seconds},${mills}`
