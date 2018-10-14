@@ -9,7 +9,7 @@
  body {background-color: #000; color: #fff; }
  table { width: auto; } 
  table th { text-align: left; } 
- table td { padding: 0.5em; } 
+ table td { text-align: left; padding: 0.5em; } 
  .settings { margin-bottom: -100px; float: right; font-size: 0.7em; }
   select {font-size: 0.8em;  }
 </style>
@@ -34,6 +34,13 @@
                   <option v-for="i in [1,2,4,8,16,24,32]" v-text="i">
                   </option>
                 </select>
+                Format:
+                <select v-model="format_res">
+                  <option value="short">Short</options>
+                  <option value="full">Full</options>
+                </select>
+		<label for="checkbox">Show Bib</label>
+		<input type="checkbox" id="show_bib" v-model="show_bib">
               </div>
             </div>
             <table>
@@ -42,16 +49,19 @@
                    <div>
                      <table>
                         <tr>
-                           <th>№
+                           <th v-if="show_bib">№
+                           </th>
+                           <th>
                            </th>
                            <th v-for="i in 32" v-if="i % pulse == 0" v-show="i <= max">
-                             <i><small><span v-text="i * 125"></span>m</i>
+                             <i><small><span v-text="i * 125"></span>m</small></i>
                            </th>
                         </tr>
                         <tr v-for="res in results">
-                          <td><big><strong><span v-text="res.bib"></span></strong></big></td>
+                          <td v-if="show_bib"><big><strong><span v-text="res.bib"></span></strong></big></td>
+                          <td><big><strong><span v-text="getAB(res.bib)"></span></strong></big></td>
                           <td v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
-                             <span v-text="time.res" @click="doCopy(time.res)"></span><br>
+                             <span v-text="getRes(time.res)" @click="doCopy(getRes(time.res))"></span><br>
                              <small><small><span v-text="get_lap(time, res)" @click="doCopy(get_lap(time, res))"></span></small></small>
                           </td>
                         </tr>
@@ -72,6 +82,8 @@
         onAir : 0,
         pulse : 1,
         max : 8,
+        format_res : 'short',
+        show_bib : true,
     },
 
     created: function () {
@@ -98,6 +110,28 @@
     },
 
     methods: {
+      getAB: function (bib) {
+	let ab = 'A'
+	if (parseInt(bib) > 100) {
+	  ab = 'B'
+	}
+	return ab
+      },
+      getRes: function (time) {
+	let res = time
+	if (app.format_res == 'full') {
+		if (res.length < 7) {
+		  if (res.length == 5) {
+		    res = `00:0${res}`
+		  }
+
+		  if (res.length == 6) {
+		    res = `00:${res}`
+		  }
+		}
+	}
+	return res
+      },
       doCopy: function (res) {
         this.$copyText(res).then(function (e) {
           alert(`Copied ${res}`)
