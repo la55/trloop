@@ -82,6 +82,8 @@
         onAir : 0,
         pulse : 1,
         max : 8,
+        remainsA : 0,
+        remainsB : 0,
         format_res : 'short',
         show_bib : true,
     },
@@ -105,32 +107,40 @@
             results[0]['bib'] = res.bib
             results[0]['times'].push(res)
           }
+          if (res.bib > 100) {
+            app.remainsB = app.countRemains(res.pulse)
+          } else {
+            app.remainsA = app.countRemains(res.pulse)
+          }
         }
       }
     },
 
     methods: {
+      countRemains: function (pulse) {
+        return (app.max - pulse) / 2 >> 0
+      },
       getAB: function (bib) {
-	let ab = 'A'
-	if (parseInt(bib) > 100) {
-	  ab = 'B'
-	}
-	return ab
+        let ab = 'A ' + app.remainsA
+        if (parseInt(bib) > 100) {
+          ab = 'B ' + app.remainsB
+        }
+        return ab
       },
       getRes: function (time) {
-	let res = time
-	if (app.format_res == 'full') {
-		if (res.length < 7) {
-		  if (res.length == 5) {
-		    res = `00:0${res}`
-		  }
+        let res = time
+        if (app.format_res == 'full') {
+          if (res.length < 7) {
+            if (res.length == 5) {
+              res = `00:0${res}`
+            }
 
-		  if (res.length == 6) {
-		    res = `00:${res}`
-		  }
-		}
-	}
-	return res
+            if (res.length == 6) {
+              res = `00:${res}`
+            }
+          }
+        }
+        return res
       },
       doCopy: function (res) {
         this.$copyText(res).then(function (e) {
