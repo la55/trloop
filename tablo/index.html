@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tablo</title>
+    <script src="vue.min.js"></script>
+</head>
+<style>
+ body {background-color: #000; color: #fff; padding: 0; margin: 0 }
+ #root { padding: 0; margin: 0 }
+ #input-tablo { float: right; } 
+</style>
+<body>
+    <div id='root'>
+	<textarea type="textarea" id="input-tablo" size="10" v-model="tablo"></textarea>
+	<pre id="info" v-text="tablo"></pre>
+    </div>
+<script>
+  var app = new Vue({
+    
+    el : '#root',
+
+    data: {
+        tablo : '',
+    },
+
+  });
+</script>
+</body>
+</html>
+
