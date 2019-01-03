@@ -41,6 +41,8 @@
                 </select>
 		<label for="checkbox">Show Bib</label>
 		<input type="checkbox" id="show_bib" v-model="show_bib">
+		<label for="checkbox">Show Lap</label>
+		<input type="checkbox" id="show_lap" v-model="show_lap">
               </div>
             </div>
             <table>
@@ -61,8 +63,8 @@
                           <td v-if="show_bib"><big><strong><span v-text="res.bib"></span></strong></big></td>
                           <td><big><strong><span v-text="getAB(res.bib)"></span></strong></big></td>
                           <td v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
-                             <span v-text="getRes(time.res)" @click="doCopy(getRes(time.res))"></span><br>
-                             <small><small><span v-text="get_lap(time, res)" @click="doCopy(get_lap(time, res))"></span></small></small>
+                             <span v-text="getRes(time.res)" @click="doCopy(getRes(time.res))"></span><br v-if="show_lap">
+                             <small v-if="show_lap"><small><span v-text="get_lap(time, res)" @click="doCopy(get_lap(time, res))"></span></small></small>
                           </td>
                         </tr>
                     </table>
@@ -86,6 +88,7 @@
         remainsB : 0,
         format_res : 'short',
         show_bib : true,
+        show_lap : true,
     },
 
     created: function () {
