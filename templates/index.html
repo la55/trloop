@@ -60,8 +60,14 @@
                            </th>
                         </tr>
                         <tr v-for="res in results">
-                          <td v-if="show_bib"><big><strong><span v-text="res.bib"></span></strong></big></td>
-                          <td><big><strong><span v-text="getAB(res.bib)"></span></strong></big></td>
+                          <td><big><strong>
+				  <span v-text="res.ab"></span>
+				  (<span v-text="res.remains"></span>)
+			  </strong></big></td>
+                          <td v-if="show_bib">
+				  <big><strong><span v-text="res.bib" @click="setEditable(res)"></span></strong></big>
+				  <input type="text" size="2" v-model="res.bib" v-show="res.editable" v-on:keyup.enter="changeBib(res)">
+			  </td>
                           <td v-for="time in res.times" v-if="time.pulse % pulse == 0 && time.bib != 0">
                              <span v-text="getRes(time.res)" @click="doCopy(getRes(time.res))"></span><br v-if="show_lap">
                              <small v-if="show_lap"><small><span v-text="get_lap(time, res)" @click="doCopy(get_lap(time, res))"></span></small></small>
@@ -105,30 +111,29 @@
           let res = message.result
           results = app.results.filter(time => time.key == res.key)
           if (results.length == 0) {
-            app.results.unshift({ 'key': res.key, 'bib': res.bib, 'times': [res] })
+            app.results.unshift({ 'key': res.key, 'bib': res.bib, 'ab': res.res, 'remains': app.countRemains(res.pulse), 'editable': false, 'times': [] })
           } else {
-            results[0]['bib'] = res.bib
+            //results[0]['bib'] = res.bib
             results[0]['times'].push(res)
+	    results[0]['remains'] = app.countRemains(res.pulse)
           }
-          if (res.bib > 100) {
-            app.remainsB = app.countRemains(res.pulse)
-          } else {
-            app.remainsA = app.countRemains(res.pulse)
-          }
+        }
+        if (message.action == 'edit_bib') {
         }
       }
     },
 
     methods: {
+      setEditable: function (res) {
+        res.editable = true
+      },
+      changeBib: function (res) {
+        msg = JSON.stringify({'action': 'edit_bib', 'bib': res.bib, 'key': res.key })
+	app.ws.send(msg) 
+        res.editable = false
+      },
       countRemains: function (pulse) {
         return (app.max - pulse) / 2 >> 0
-      },
-      getAB: function (bib) {
-        let ab = 'A ' + app.remainsA
-        if (parseInt(bib) > 100) {
-          ab = 'B ' + app.remainsB
-        }
-        return ab
       },
       getRes: function (time) {
         let res = time
