@@ -43,6 +43,13 @@
 		<input type="checkbox" id="show_bib" v-model="show_bib">
 		<label for="checkbox">Show Lap</label>
 		<input type="checkbox" id="show_lap" v-model="show_lap">
+		<input type="text" size="1" id="find_bib" v-model="bib" @keyup.enter="findBib">
+		<table>
+		  <tr v-for="res in find_res" v-if="res.pulse % pulse == 0">
+			  <td v-text="res.pulse"></td>
+			  <td v-text="res.res"></td>
+		  </tr>
+		</table>
               </div>
             </div>
             <table>
@@ -90,6 +97,8 @@
         onAir : 0,
         pulse : 1,
         max : 8,
+        bib : '',
+        find_res : '',
         remainsA : 0,
         remainsB : 0,
         format_res : 'short',
@@ -111,14 +120,16 @@
           let res = message.result
           results = app.results.filter(time => time.key == res.key)
           if (results.length == 0) {
-            app.results.unshift({ 'key': res.key, 'bib': res.bib, 'ab': res.res, 'remains': app.countRemains(res.pulse), 'editable': false, 'times': [] })
+            app.results.unshift({ 'key': res.key, 'bib': 999, 'ab': res.res, 'remains': app.countRemains(res.pulse), 'editable': false, 'times': [] })
           } else {
             //results[0]['bib'] = res.bib
             results[0]['times'].push(res)
 	    results[0]['remains'] = app.countRemains(res.pulse)
           }
         }
-        if (message.action == 'edit_bib') {
+        if (message.action == 'find_bib') {
+	  app.find_res = message.results
+	  console.log(message.results)
         }
       }
     },
@@ -127,13 +138,18 @@
       setEditable: function (res) {
         res.editable = true
       },
+      findBib: function () {
+	bib = app.bib
+        msg = JSON.stringify({'action': 'find_bib', 'bib': bib })
+	app.ws.send(msg) 
+      },
       changeBib: function (res) {
         msg = JSON.stringify({'action': 'edit_bib', 'bib': res.bib, 'key': res.key })
 	app.ws.send(msg) 
         res.editable = false
       },
       countRemains: function (pulse) {
-        return (app.max - pulse) / 2 >> 0
+        return (app.max - pulse - 1) / 2 >> 0
       },
       getRes: function (time) {
         let res = time

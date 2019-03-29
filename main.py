@@ -116,6 +116,17 @@ class WebSocketHandler(WebSocketHandler):
     def on_message(self, message):
         data = json.loads(message)
         print(data)
+        if data['action'] == 'find_bib':
+            try:
+                bib = int(data['bib'])
+            except:
+                bib = 0
+            sql = '''SELECT * FROM results WHERE bib={} ORDER BY key, pulse'''.format(bib)
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            results = [{ 'pulse': row[3], 'res': row[1] } for row in rows]
+            msg = json.dumps({'action': 'find_bib', 'results': results })
+            [(con.write_message(msg), print("Find bib results: {}".format(bib))) for con in connections]
         if data['action'] == 'edit_bib':
             bib = data['bib']
             key = data['key'].split('-')[0]
