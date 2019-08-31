@@ -11,7 +11,7 @@ import re
 import queue
 import time
 import sqlite3
-import res_mod
+from res_mod import Race
 
 
 
@@ -21,7 +21,7 @@ define("port", default=8080, help="app port", type=int)
 dbconn = sqlite3.connect('db.sqlite3')
 cursor = dbconn.cursor()
 
-cursor.execute('''CREATE TABLE IF NOT EXISTS results (key INTEGER, result TEXT, bib INTEGER, pulse INTEGER)''')
+cursor.execute('''CREATE TABLE IF NOT EXISTS results (key TEXT, result TEXT, bib INTEGER, pulse INTEGER)''')
 dbconn.commit()
 
 q = queue.Queue()
@@ -40,6 +40,7 @@ s.bind(('', 6100))
 print('binded')
 s.listen(1)
 print('listened')
+race = Race()
 
 def getData():
     conn, addr = s.accept()
@@ -51,12 +52,13 @@ def getData():
             break
         for match in pattern_data.finditer(data):
             p_data = match.group().decode()
-            if res_mod.is_result(p_data):
-                r = res_mod.res_from_data(p_data)
-                m_dict = { 'action': 'result', 'result': r._asdict() }
+            if race.is_result(p_data):
+                res = race.res_from_data(p_data)
+                m_dict = { 'action': 'result', 'result': res._asdict() }
                 q.put(m_dict)
+                q_res.put(res)
             else:
-                st = res_mod.start_from_data(p_data)
+                st = race.start_from_data(p_data)
                 result1 = {'key': st.key_a, 'res': 'A', 'bib': st.bib_a, 'pulse': 0}
                 result2 = {'key': st.key_b, 'res': 'B', 'bib': st.bib_b, 'pulse': 0}
                 for result in [result1, result2]:
@@ -67,26 +69,18 @@ def getData():
 
 
 def saveRes():
-            #res_db = {'key': tmpst, 'res': res, 'bib': bib, 'pulse': pulse}
-            #q_res.put(res_db)
-            #print("Thread 1: pull data from socket: {} - {}".format(pulse, res))
     dbconn = sqlite3.connect('db.sqlite3')
     cursor = dbconn.cursor()
     while True:
-        while not q.empty():
+        while not q_res.empty():
             res = q_res.get()
-            key = res['key']
-            res = res['res']
-            bib = res['bib']
-            pulse = res['pulse']
-            print('Values: ', key, res, bib, pulse)
-            sql = '''INSERT INTO results VALUES ({}, '{}', {}, {}) '''.format(key, res, bib, pulse)
+            sql = '''INSERT INTO results VALUES ('{}', '{}', {}, {}) '''.format(res.key, res.res, res.bib, res.pulse)
+            print(sql)
             cursor.execute(sql)
             dbconn.commit()
         time.sleep(0.01)
 
 
-#@gen.coroutine
 def sendToAll():
     while True:
         if len(connections) > 0:
@@ -96,13 +90,11 @@ def sendToAll():
                 print(msg)
                 [(con.write_message(msg), 
                 print("Thread 2: push to web: {}".format(i))) for i, con in enumerate(connections)]
-        #yield gen.sleep(0.01)  #this prevent blocking and allow other client to connect
         time.sleep(0.01)
 
 
 class WebSocketHandler(WebSocketHandler):
 
-    # accept all cross-origin traffic
     def check_origin(self, origin):
         return True
 
@@ -123,15 +115,15 @@ class WebSocketHandler(WebSocketHandler):
             rows = cursor.fetchall()
             results = [{ 'pulse': row[3], 'res': row[1] } for row in rows]
             msg = json.dumps({'action': 'find_bib', 'results': results })
-            [(con.write_message(msg), print("Find bib results: {}".format(bib))) for con in connections]
+            [(con.write_message(msg), print("Find bib results: {} rows {}".format(bib, len(rows)))) for con in connections]
         if data['action'] == 'edit_bib':
             bib = data['bib']
-            key = data['key'].split('-')[0]
-            sql = '''UPDATE results SET bib={} WHERE key={}'''.format(bib, key)
-            cursor.execute(sql)
+            key = data['key']
+            sql = '''UPDATE results SET bib={} WHERE key="{}"'''.format(bib, key)
+            row_count = cursor.execute(sql)
             dbconn.commit()
             msg = json.dumps({'action': 'edit_bib', 'bib': bib, 'key': key })
-            [(con.write_message(msg), print("Bib updated: {}".format(bib))) for con in connections]
+            [(con.write_message(msg), print("Bib updated: {} rows {}".format(bib, row_count))) for con in connections]
 
     def on_close(self):
         connections.remove(self)
@@ -173,7 +165,7 @@ if __name__ == '__main__':
     workers = [
         Thread(target=getData),
         Thread(target=sendToAll),
-        #Thread(target=saveRes),
+        Thread(target=saveRes),
     ]
     for w in workers:
         w.daemon = True
