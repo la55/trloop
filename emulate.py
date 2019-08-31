@@ -7,7 +7,7 @@ s.connect(('', 6100))
 
 with open('out6.txt', 'rb') as f:
     for line in f:
-        time.sleep(0.09)
+        time.sleep(0.01)
         s.send(line)
         print(line.decode())
 

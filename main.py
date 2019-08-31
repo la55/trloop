@@ -11,6 +11,8 @@ import re
 import queue
 import time
 import sqlite3
+import res_mod
+
 
 
 define("host", default="localhost", help="app host", type=str)
@@ -31,7 +33,7 @@ connections = set() #set of websocket "clients"
 
 pattern_data = re.compile(b'\|[0-9\. ]*\|[0-9\. ]*\|[0-9\. ]*\|[0-9\. ]*\|[0-9\.\:\| ]*')
 pattern_res = re.compile('\d\d?:\d\d\.\d\d\d|\d\d?\.\d\d\d')
-tmpst = 'default'
+
 
 s = socket.socket()
 s.bind(('', 6100))
@@ -49,46 +51,39 @@ def getData():
             break
         for match in pattern_data.finditer(data):
             p_data = match.group().decode()
-            print(p_data)
-            res_match = pattern_res.search(p_data)
-            if res_match:
-                res = res_match.group().replace('.', ',')
-                ab, cd, ee, pulse, bib, *xx = p_data.split('|')
-                if len(xx) < 2:
-                    ab, cd, ee, bib1, bib2, xx = p_data.split('|')
-                    tmpst = time.time()
-                    key1 = '{}-{}'.format(tmpst, bib1)
-                    key2 = '{}-{}'.format(tmpst, bib2)
-                    result1 = {'key': key1, 'res': 'A', 'bib': bib1, 'pulse': pulse}
-                    result2 = {'key': key2, 'res': 'B', 'bib': bib2, 'pulse': pulse}
-                    for result in [result1, result2]:
-                        m_dict = { 'action': 'result', 'result': result }
-                        q.put(m_dict)
-                    continue
-                key = '{}-{}'.format(tmpst, bib)
-                result = {'key': key, 'res': res, 'bib': bib, 'pulse': pulse}
-                m_dict = { 'action': 'result', 'result': result }
+            if res_mod.is_result(p_data):
+                r = res_mod.res_from_data(p_data)
+                m_dict = { 'action': 'result', 'result': r._asdict() }
                 q.put(m_dict)
-                res_db = {'key': tmpst, 'res': res, 'bib': bib, 'pulse': pulse}
-                res_dict = { 'action': 'result', 'result': res_db }
-                q_res.put(res_dict)
-                print("Thread 1: pull data from socket: {} - {}".format(pulse, res))
+            else:
+                st = res_mod.start_from_data(p_data)
+                result1 = {'key': st.key_a, 'res': 'A', 'bib': st.bib_a, 'pulse': 0}
+                result2 = {'key': st.key_b, 'res': 'B', 'bib': st.bib_b, 'pulse': 0}
+                for result in [result1, result2]:
+                    m_dict = { 'action': 'result', 'result': result }
+                    q.put(m_dict)
 
     getData()
 
 
 def saveRes():
+            #res_db = {'key': tmpst, 'res': res, 'bib': bib, 'pulse': pulse}
+            #q_res.put(res_db)
+            #print("Thread 1: pull data from socket: {} - {}".format(pulse, res))
     dbconn = sqlite3.connect('db.sqlite3')
     cursor = dbconn.cursor()
     while True:
         while not q.empty():
             res = q_res.get()
-            if res['action'] == 'result':
-                key, res, bib, pulse = res['result'].values()
-                print('Values: ', key, res, bib, pulse)
-                sql = '''INSERT INTO results VALUES ({}, '{}', {}, {}) '''.format(key, res, bib, pulse)
-                cursor.execute(sql)
-                dbconn.commit()
+            key = res['key']
+            res = res['res']
+            bib = res['bib']
+            pulse = res['pulse']
+            print('Values: ', key, res, bib, pulse)
+            sql = '''INSERT INTO results VALUES ({}, '{}', {}, {}) '''.format(key, res, bib, pulse)
+            cursor.execute(sql)
+            dbconn.commit()
+        time.sleep(0.01)
 
 
 #@gen.coroutine
@@ -98,7 +93,9 @@ def sendToAll():
             while not q.empty():
                 m_dict = q.get()
                 msg = json.dumps(m_dict)
-                [(con.write_message(msg), print("Thread 2: push to web: {}".format(con))) for con in connections]
+                print(msg)
+                [(con.write_message(msg), 
+                print("Thread 2: push to web: {}".format(i))) for i, con in enumerate(connections)]
         #yield gen.sleep(0.01)  #this prevent blocking and allow other client to connect
         time.sleep(0.01)
 
@@ -176,7 +173,7 @@ if __name__ == '__main__':
     workers = [
         Thread(target=getData),
         Thread(target=sendToAll),
-        Thread(target=saveRes),
+        #Thread(target=saveRes),
     ]
     for w in workers:
         w.daemon = True
