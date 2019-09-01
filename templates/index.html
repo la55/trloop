@@ -10,48 +10,58 @@
  table { width: auto; } 
  table th { text-align: left; } 
  table td { text-align: left; padding: 0.5em; } 
- .settings { margin-bottom: -100px; float: right; font-size: 0.7em; }
+ .settings { font-size: 0.7em; }
   select {font-size: 0.8em;  }
 </style>
 <body>
     <div id='root'>
 
-            <div class="settings">
-              <div v-if="onAir == 1" style="background:green;padding:0.3em;color:white">
-                  Connected
-              </div>
-              <div v-if="onAir == 0" style="background:red;padding:0.3;color:white">
-                  No connection
-              </div>
-              <div>
-                Show every:
-                <select v-model="pulse">
-                  <option v-for="i in [1,2,4,8]" v-text="i">
-                  </option>
-                </select>
-                Max:
-                <select v-model="max">
-                  <option v-for="i in [1,2,4,8,16,24,32]" v-text="i">
-                  </option>
-                </select>
-                Format:
-                <select v-model="format_res">
-                  <option value="short">Short</options>
-                  <option value="full">Full</options>
-                </select>
-		<label for="checkbox">Show Bib</label>
-		<input type="checkbox" id="show_bib" v-model="show_bib">
-		<label for="checkbox">Show Lap</label>
-		<input type="checkbox" id="show_lap" v-model="show_lap">
-		<input type="text" size="1" id="find_bib" v-model="bib" @keyup.enter="findBib">
+    <div class="settings">
+      <div v-if="onAir == 1" style="background:green;padding:0.3em;color:white">
+          Connected
+      </div>
+      <div v-if="onAir == 0" style="background:red;padding:0.3;color:white">
+          No connection
+      </div>
+      <div>
+        Show every:
+        <select v-model="pulse">
+          <option v-for="i in [1,2,4,8]" v-text="i">
+          </option>
+        </select>
+        Max:
+        <select v-model="max">
+          <option v-for="i in [1,2,4,8,16,24,32]" v-text="i">
+          </option>
+        </select>
+        Format:
+        <select v-model="format_res">
+          <option value="short">Short</options>
+          <option value="full">Full</options>
+        </select>
+        <label for="checkbox">Show Bib</label>
+        <input type="checkbox" id="show_bib" v-model="show_bib">
+        <label for="checkbox">Show Lap</label>
+        <input type="checkbox" id="show_lap" v-model="show_lap">
+        Find:
+        <input type="text" size="1" id="find_bib" v-model="bib" @keyup.enter="findBib">
+        Current:
+        <select v-model="current_race" @change="changeCurrent">
+          <option v-for="race in races" v-text="race">
+          </option>
+        </select>
+        <button @click="loadCurrent">Загрузить</button>
+        New race:
+        <input v-model="new_race" type="text" size="10" id="new_race" @keyup.enter="newRace">
+      </div>
+    </div>
 		<table>
 		  <tr v-for="res in find_res" v-if="res.pulse % pulse == 0">
+			  <td v-text="res.race"></td>
 			  <td v-text="res.pulse"></td>
 			  <td v-text="res.res"></td>
 		  </tr>
 		</table>
-              </div>
-            </div>
             <table>
               <tr>
                 <td> 
@@ -98,6 +108,9 @@
         pulse : 1,
         max : 8,
         bib : '',
+        current_race: null,
+        races: [],
+        new_race: null,
         find_res : '',
         remainsA : 0,
         remainsB : 0,
@@ -116,20 +129,25 @@
       }
       this.ws.onmessage = function(e) {
         message = JSON.parse(e.data);
+        if (message.action == 'open') {
+          app.races = message.races
+          app.current_race = races[0]
+        }
+        if (message.action == 'start') {
+          let st = message.start
+          app.results.unshift({ 'key': st.key_a, 'bib': st.bib_a, 'ab': 'A', 'remains': app.countRemains(0), 'editable': false, 'times': [] })
+          if (st.bib_b != '') {
+            app.results.unshift({ 'key': st.key_b, 'bib': st.bib_b, 'ab': 'B', 'remains': app.countRemains(0), 'editable': false, 'times': [] })
+          }
+        }
         if (message.action == 'result') {
           let res = message.result
           results = app.results.filter(time => time.key == res.key)
-          if (results.length == 0) {
-            app.results.unshift({ 'key': res.key, 'bib': 999, 'ab': res.res, 'remains': app.countRemains(res.pulse), 'editable': false, 'times': [] })
-          } else {
-            //results[0]['bib'] = res.bib
-            results[0]['times'].push(res)
-	    results[0]['remains'] = app.countRemains(res.pulse)
-          }
+          results[0]['times'].push(res)
+          results[0]['remains'] = app.countRemains(res.pulse)
         }
         if (message.action == 'find_bib') {
-	  app.find_res = message.results
-	  console.log(message.results)
+          app.find_res = message.results
         }
       }
     },
@@ -138,17 +156,37 @@
       setEditable: function (res) {
         res.editable = true
       },
+      newRace: function () {
+        if (new_race != null) {
+          new_race = app.new_race
+          msg = JSON.stringify({'action': 'new_race', 'new_race': new_race })
+          app.ws.send(msg) 
+          app.races.push(new_race)
+          app.new_race = null
+        }
+      },
+      loadCurrent: function () {
+        race = app.current_race
+        msg = JSON.stringify({'action': 'load_current', 'race': race })
+        app.ws.send(msg) 
+      },
+      changeCurrent: function () {
+        current_race = app.current_race
+        msg = JSON.stringify({'action': 'change_current', 'current_race': current_race })
+        app.ws.send(msg) 
+      },
       findBib: function () {
-	bib = app.bib
-        msg = JSON.stringify({'action': 'find_bib', 'bib': bib })
-	app.ws.send(msg) 
+        bib = app.bib
+        race = app.current_race
+        msg = JSON.stringify({'action': 'find_bib', 'bib': bib, 'race': race })
+        app.ws.send(msg) 
       },
       changeBib: function (res) {
         msg = JSON.stringify({'action': 'edit_bib', 'bib': res.bib, 'key': res.key })
-	app.ws.send(msg) 
+        app.ws.send(msg) 
         res.editable = false
       },
-      countRemains: function (pulse) {
+        countRemains: function (pulse) {
         return (app.max - pulse - 1) / 2 >> 0
       },
       getRes: function (time) {
