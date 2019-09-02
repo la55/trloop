@@ -48,7 +48,7 @@
         <button @click="loadCurrent">Load</button>
         <button @click="clearCurrent">Clear</button>
         Admin:
-        <input v-model="admin" type="text" size="2">
+        <input v-model="admin" type="password" size="2">
       </div>
       <div v-if="admin == yes">
         <label for="checkbox">Show Bib</label>
@@ -123,7 +123,7 @@
         max : 8,
         bib : '',
         admin : '',
-        yes : 'YeS',
+        yes : 'Ye$',
         current_race: null,
         races: [],
         new_race: null,
@@ -162,8 +162,20 @@
           results[0]['times'].push(res)
           results[0]['remains'] = app.countRemains(res.pulse)
         }
+        if (message.action == 'new_race') {
+          app.races.push(message.new_race)
+          app.new_race = null
+        }
         if (message.action == 'find_bib') {
           app.find_res = message.results
+        }
+        if (message.action == 'edit_bib') {
+          let bib = message.bib 
+          let key = message.key 
+          results = app.results.filter(res => res.key == key)
+          if (results.length > 0) {
+            results[0].bib = bib
+          }
         }
       }
     },
@@ -197,8 +209,6 @@
           new_race = app.new_race
           msg = JSON.stringify({'action': 'new_race', 'new_race': new_race })
           app.ws.send(msg) 
-          app.races.push(new_race)
-          app.new_race = null
         }
       },
       clearCurrent: function () {

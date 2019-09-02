@@ -122,6 +122,10 @@ class WebSocketHandler(WebSocketHandler):
                 res = Result(key, 'A', bib, pulse, time)
                 msg = json.dumps({ 'action': 'result', 'result': res._asdict() })
                 self.write_message(msg)
+        if data['action'] == 'new_race':
+            race = data['new_race']
+            msg = json.dumps({'action': 'new_race', 'new_race': race })
+            [con.write_message(msg) for con in connections]
         if data['action'] == 'change_current':
             global current_race
             current_race = data['current_race']
