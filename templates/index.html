@@ -25,7 +25,12 @@
         <span v-if="onAir == 0" style="background:red;padding:0.3;color:white">
             No connection
         </span>
-        Show every:
+        Format:
+        <select v-model="format_res">
+          <option value="short">Short</options>
+          <option value="full">Full</options>
+        </select>
+        Every:
         <select v-model="pulse">
           <option v-for="i in [1,2,4,8]" v-text="i">
           </option>
@@ -46,11 +51,6 @@
         <input v-model="admin" type="text" size="2">
       </div>
       <div v-if="admin == yes">
-        Format:
-        <select v-model="format_res">
-          <option value="short">Short</options>
-          <option value="full">Full</options>
-        </select>
         <label for="checkbox">Show Bib</label>
         <input type="checkbox" id="show_bib" v-model="show_bib">
         <label for="checkbox">Show Lap</label>
@@ -187,7 +187,9 @@
     methods: {
       setEditable: function (res) {
         if (app.admin == app.yes) {
-          res.editable = true
+          if (res.times.length >= app.max) {
+            res.editable = true
+          }
         }
       },
       newRace: function () {
@@ -203,6 +205,7 @@
         app.results = []
       },
       loadCurrent: function () {
+        app.clearCurrent()
         race = app.current_race
         msg = JSON.stringify({'action': 'load_current', 'race': race })
         app.ws.send(msg) 
