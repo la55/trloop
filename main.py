@@ -55,7 +55,7 @@ def getData():
             p_data = match.group().decode()
             if race.is_result(p_data):
                 res = race.res_from_data(p_data)
-                m_dict = { 'action': 'result', 'race': current_race, 'result': res._asdict() }
+                m_dict = { 'action': 'result', 'result': res._asdict() }
                 q_res.put(res)
             else:
                 st = race.start_from_data(p_data)
@@ -103,7 +103,7 @@ class WebSocketHandler(WebSocketHandler):
         rows = cursor.fetchall()
         races = [row[0] for row in rows]
         msg = json.dumps({'action': 'open', 'races': races })
-        [con.write_message(msg) for con in connections]
+        self.write_message(msg)
 
     def on_message(self, message):
         data = json.loads(message)
@@ -117,11 +117,11 @@ class WebSocketHandler(WebSocketHandler):
                 race, key, time, bib, pulse = row
                 if pulse == 1:
                     st = Start(key, '', bib, '', time)
-                    m_dict = { 'action': 'start', 'start': st._asdict() }
-                    q.put(m_dict)
+                    msg = json.dumps({ 'action': 'start', 'start': st._asdict() })
+                    self.write_message(msg)
                 res = Result(key, 'A', bib, pulse, time)
-                m_dict = { 'action': 'result', 'race': current_race, 'result': res._asdict() }
-                q.put(m_dict)
+                msg = json.dumps({ 'action': 'result', 'result': res._asdict() })
+                self.write_message(msg)
         if data['action'] == 'change_current':
             global current_race
             current_race = data['current_race']
@@ -140,7 +140,8 @@ class WebSocketHandler(WebSocketHandler):
         if data['action'] == 'edit_bib':
             bib = data['bib']
             key = data['key']
-            sql = '''UPDATE results SET bib={} WHERE key="{}"'''.format(bib, key)
+            race = data['race']
+            sql = '''UPDATE results SET bib={}, race='{}' WHERE key="{}"'''.format(bib, race, key)
             row_count = cursor.execute(sql)
             dbconn.commit()
             msg = json.dumps({'action': 'edit_bib', 'bib': bib, 'key': key })
