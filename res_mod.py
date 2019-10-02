@@ -31,6 +31,7 @@ class Race():
         _, _, _,  pulse, bib, time, *xx = (i.strip() for i in data_str.split('|'))
         if time.strip() == '':
             time = xx[0]
+        time = time.replace('.',',')
         bib, pulse = map(int, (bib, pulse))
         ab = 'A' if bib < 100 else 'B'
         key = '{}-{}'.format(self.start.time, bib)

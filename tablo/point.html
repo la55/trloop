@@ -7,14 +7,14 @@
 <style>
  body {background-color: #000; color: #fff; padding: 0; margin: 0 }
  table td {padding: 2; margin: 0 }
- input, button {font-size: 36px;  }
+ input, button {font-size: 24px;  }
  .control { float: right; padding-right: 200px }
  #root { padding: 0; margin: 0 }
 </style>
 <body>
     <div id='root'>
 	    <table>
-	        <tr v-for="(p, i) in sorted">
+		    <tr v-for="(p, i) in sorted" v-if="isDisplay(i)">
 			<td v-text="i + 1"></td>
 			<td v-text="p.bib"></td>
 			<td v-text="p.family"></td>
@@ -26,6 +26,8 @@
 	<br>
 	<br>
 	<br>
+	<br>
+	<input type="text" v-model="offset" size="1" name="offset">
 	<br>
 	<br>
 	<br>
@@ -55,6 +57,7 @@
 	f3: '',
 	f4: '',
 	bib: '',
+	offset: 0,
 	family: '',
 	region: '',
 	bibs: [],
@@ -67,6 +70,11 @@
     },
 
     methods: {
+      isDisplay: function (i) {
+	  let max = this.offset + 3
+	  let tf = i < max & i >= this.offset
+	  return tf
+      },
       getByBib: function (bib) {
 	 return this.bibs.filter(p => p.bib == bib)[0]
       },
