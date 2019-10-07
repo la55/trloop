@@ -110,17 +110,17 @@
       },
       intFinish: function () {
 	 p1 = this.getByBib(parseInt(this.f1))
-	 p1.points += 5
-	 this.f1 = 0
+	 p1.points = parseInt(p1.points) + 5
+	 this.f1 = '' 
 	 p2 = this.getByBib(parseInt(this.f2))
-	 p2.points += 3
-	 this.f2 = 0
+	 p2.points = parseInt(p2.points) + 3
+	 this.f2 = '' 
 	 p3 = this.getByBib(parseInt(this.f3))
-	 p3.points += 2
-	 this.f3 = 0
+	 p3.points = parseInt(p3.points) + 2
+	 this.f3 = '' 
 	 p4 = this.getByBib(parseInt(this.f4))
-	 p4.points += 1
-	 this.f4 = 0
+	 p4.points = parseInt(p4.points) + 1
+	 this.f4 = ''
       },
       deleteBib: function (bib) {
 	 this.bibs = this.bibs.filter(p => p.bib != bib)
