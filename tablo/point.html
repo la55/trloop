@@ -7,7 +7,7 @@
 <style>
  body {background-color: #000; color: #fff; padding: 0; margin: 0 }
  table td {padding: 2; margin: 0 }
- input, button {font-size: 24px;  }
+ input, button {font-size: 16px;  }
  .control { float: right; padding-right: 200px }
  #root { padding: 0; margin: 0 }
 </style>
@@ -16,7 +16,7 @@
 	    <table>
 		    <tr v-for="(p, i) in sorted" v-if="isDisplay(i)">
 			<td v-text="i + 1"></td>
-			<td v-text="p.bib"></td>
+			<td v-text="'№' + p.bib"></td>
 			<td v-text="p.family"></td>
 			<td v-text="p.region"></td>
 			<td v-text="p.points"></td>
@@ -25,25 +25,28 @@
 	<div class="control">
 	<br>
 	<br>
-	<br>
-	<br>
-	<input type="text" v-model="offset" size="1" name="offset">
-	<br>
-	<br>
-	<br>
-	<br>
-	<br>
-	<input type="text" v-model="bib" size="1" name="bib">
-	<input type="text" v-model="family" size="2"  name="family">
-	<input type="text" v-model="region" size="2"  name="region">
-	<button @click="addBib()">Add</button>
+	Offset: <input type="text" v-model="offset" size="1" name="offset">
+	<button @click="addBib()">Add Player</button>
 	<br>
 	<br>
 	<input type="text" v-model="f1" size="1" name="f1">
 	<input type="text" v-model="f2" size="1" name="f2">
 	<input type="text" v-model="f3" size="1" name="f3">
 	<input type="text" v-model="f4" size="1" name="f4">
-	<button @click="intFinish()">Add</button>
+	<button @click="intFinish()">Finish</button>
+	<br>
+	<button @click="plusTw()">+20</button>
+	<input type="text" v-model="bib" size="1" name="bib">
+	<button @click="minusTw()">-20</button>
+	    <table>
+		    <tr v-for="p in sorted">
+			<td><input size="1" @change="saveBibs" v-model="p.bib"></input></td>
+			<td><input size="3" @change="saveBibs"  v-model="p.family"></input></td>
+			<td><input size="2" @change="saveBibs"  v-model="p.region"></input></td>
+			<td><input size="1" @change="saveBibs"  v-model="p.points"></input></td>
+			<td><button @click="deleteBib(p.bib)">x</button></td>
+		</tr>
+	    </table>
 	</div>
     </div>
 <script>
@@ -56,11 +59,19 @@
 	f2: '',
 	f3: '',
 	f4: '',
-	bib: '',
 	offset: 0,
-	family: '',
-	region: '',
-	bibs: [],
+	bib: '',
+        bibs: [],
+    },
+
+    created: function () {
+	    setInterval(this.changeOffset, 5000)
+	    let bibs = localStorage.getItem('bibs', [])
+	    if (bibs == null) {
+		this.bibs = []
+	    } else {
+		this.bibs = JSON.parse(bibs)
+	    }
     },
 
     computed: {
@@ -70,13 +81,32 @@
     },
 
     methods: {
+      changeOffset: function () {
+	 let ofs = parseInt(this.offset)
+	 ofs += 3
+	 if (ofs >= this.bibs.length) {
+		ofs = 0
+	 }
+	 this.offset = ofs
+      },
       isDisplay: function (i) {
-	  let max = this.offset + 3
-	  let tf = i < max & i >= this.offset
+	  let ofs = parseInt(this.offset)
+	  let max = ofs + 3
+	  let tf = i < max & i >= ofs
 	  return tf
       },
       getByBib: function (bib) {
 	 return this.bibs.filter(p => p.bib == bib)[0]
+      },
+      plusTw: function () {
+	 p1 = this.getByBib(parseInt(this.bib))
+	 p1.points += 20 
+	 this.bib = ''
+      },
+      minusTw: function () {
+	 p1 = this.getByBib(parseInt(this.bib))
+	 p1.points -= 20 
+	 this.bib = ''
       },
       intFinish: function () {
 	 p1 = this.getByBib(parseInt(this.f1))
@@ -92,11 +122,16 @@
 	 p4.points += 1
 	 this.f4 = 0
       },
+      deleteBib: function (bib) {
+	 this.bibs = this.bibs.filter(p => p.bib != bib)
+	 this.saveBibs()
+      },
+      saveBibs: function () {
+	localStorage.setItem('bibs', JSON.stringify(this.bibs))
+      },
       addBib: function () {
-	this.bibs.push({ bib: this.bib, family: this.family, region: this.region, points: 0 })	
-	this.bib = 0
-	this.family = ''
-	this.region = ''
+	this.bibs.push({ bib: 0, family: '', region: '', points: 0 })	
+	this.saveBibs()
       }
     }
 
