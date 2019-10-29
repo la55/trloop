@@ -8,11 +8,12 @@
  body {background-color: #000; color: #fff; padding: 0; margin: 0 }
  #root { padding: 0; margin: 0 }
  #input-tablo { float: right; } 
+ #info { font-size: 1.7em; }
 </style>
 <body>
     <div id='root'>
-	<textarea type="textarea" rows="12" id="input-tablo" width="300" v-model="tablo"></textarea>
 	<pre id="info" v-text="tablo"></pre>
+	<textarea type="textarea" rows="12" id="input-tablo" width="300" v-model="tablo"></textarea>
     </div>
 <script>
   var app = new Vue({

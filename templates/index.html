@@ -47,6 +47,8 @@
         </select>
         <button @click="loadCurrent">Load</button>
         <button @click="clearCurrent">Clear</button>
+        <label for="checkbox">Rank</label>
+        <input type="checkbox" id="show_ranking" v-model="show_ranking">
         Admin:
         <input v-model="admin" type="password" size="2">
       </div>
@@ -61,8 +63,7 @@
         <input v-model="new_race" type="text" size="10" id="new_race" @keyup.enter="newRace">
       </div>
     </div>
-		<table class="latest">
-    <ol class="latest">
+		<table class="latest" v-if="show_ranking">
       <tr v-for="(res, i) in sorted" >
         <td><span v-text="i + 1"></span></td>
         <td><span v-text="res.bib"></span></td>
@@ -133,6 +134,7 @@
         format_res : 'short',
         show_bib : true,
         show_lap : true,
+        show_ranking : false,
     },
 
     created: function () {
@@ -184,11 +186,11 @@
       sorted : function () {
         latest = []
         for (let res of app.results) {
-            times = res.times.filter(time => time.pulse == app.max)
+            times = res.times.filter(time => time.pulse >= app.max)
             if (times.length == 0)  {
               continue
             }
-            time = times[0].res
+            time = times[times.length - 1].res
             time_int = app.time_to_int(time)
             latest.push({ bib: res.bib, time: time, time_int: time_int })
         }

@@ -15,6 +15,9 @@
 </style>
 <body>
 	<div id='root'>
+		<div v-if="show_time">
+		<timenow></timenow>
+		</div>
 		<div id="tablo">
 	    <div class="tablo-col">
 				<tablotable :bibs="tabloone"></tablotable>
@@ -35,6 +38,8 @@
 			<button @click="minusTw()">-20</button>
 			<button @click="sortBibs()">Sort</button>
 			<button @click="addBib()">Add Player</button>
+			<label for="checkbox">Time</label>
+			<input type="checkbox" id="show_time" v-model="show_time">
 			<table>
 				<tr v-for="pl in bibs">
 					<td><input size="1" @change="saveBibs" v-model="pl.bib"></input></td>
@@ -47,6 +52,27 @@
 		</div><!-- Control -->
 	</div> <!-- Root -->
 <script>
+	Vue.component('timenow', {
+		template: `
+			<div class="timenow">
+				<span v-text="now"></span>
+			</div>
+		`,
+		data () {
+			return {
+				now: '15.04.00'
+			}
+		},
+    created: function () {
+	    setInterval(this.getTime, 1000)
+		},
+    methods: {
+      getTime : function () {
+				let d = new Date()
+				this.now =  d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds()
+      },
+		}
+	})
 	Vue.component('tablotable', {
 		template: `
 				<table>
@@ -70,17 +96,18 @@
     el : '#root',
 
     data: {
-	f1: 0,
-	f2: 0,
-	f3: 0,
-	f4: 0,
-	offset: 0,
-	bib: 0,
-        bibs: [],
+			f1: 0,
+			f2: 0,
+			f3: 0,
+			f4: 0,
+			offset: 0,
+			bib: 0,
+			bibs: [],
+			show_time: 'false',
     },
 
     created: function () {
-	    setInterval(this.changeOffset, 3000)
+	    //setInterval(this.changeOffset, 3000)
 	    let bibs = localStorage.getItem('bibs', [])
 	    if (bibs == null) {
 			this.bibs = []

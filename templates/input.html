@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bib Time</title>
+    <script src="/static/vue.min.js"></script>
+</head>
+<body>
+<style>
+    .color0 {
+        background: #eee;
+    }
+    .color1 {
+        background: Maroon;
+        color: #fff;
+    }
+    .color2 {
+        background: Red;
+        color: #fff;
+    }
+    .color3 {
+        background: Orange;
+        color: #fff;
+    }
+    .color4 {
+        background: Yellow;
+    }
+    .color5 {
+        background: Olive;
+        color: #fff;
+    }
+    .color6 {
+        background: Green;
+        color: #fff;
+    }
+    .color7 {
+        background: Purple;
+        color: #fff;
+    }
+    .color8 {
+        background: Fuchsia;
+        color: #fff;
+    }
+    .color9 {
+        background: Lime;
+        color: #fff;
+    }
+    .color10 {
+        background: Teal;
+        color: #fff;
+    }
+    .color11 {
+        background: Aqua;
+        color: #fff;
+    }
+    .color12 {
+        background: Blue;
+        color: #fff;
+    }
+    .color13 {
+        background: Navy;
+        color: #fff;
+    }
+    .color14 {
+        background: Black;
+        color: #fff;
+    }
+    .color15 {
+        background: Gray;
+        color: #fff;
+    }
+    .color16 {
+        background: Silver;
+        color: #fff;
+    }
+    .right-div {
+        float: right;
+    }
+    .bib-div button {
+        margin: 2px;
+        font-size: 48px;
+        padding: 1px 1px;
+        width: 120px;
+    }
+    .active {
+      text-color: white;
+      background: red;
+    }
+    .prot-table td 
+    {
+        padding: 5px;
+    }
+    #elapsed {
+         font-size: 36px;
+         margin: 0;
+    }
+    #start-button {
+         font-size: 24px;
+    }
+    #time-button {
+         font-size: 28px;
+    }
+    .prebib {
+        font-size: 20px;
+    }
+    @media print
+    {    
+        .no-print, .no-print *
+        {
+            display: none !important;
+        }
+        #diplom-wrapper 
+        {
+	    background: #555;
+            position: fixed;
+            margin: 0;
+        }
+        #diplom 
+        {
+            position: fixed;
+            margin: 510px 0 0 210px;
+        }
+    }
+</style>
+    <div id='root'>
+      
+         <div class="no-print bib-div right-div">
+          <table class="bib-table" v-if="gtobib == ''">
+                <tr>
+                     <td v-for="i in 3">
+                      <button @click='sendNumber(i)' v-text="i"></button>
+                     </td>
+                </tr>
+                <tr>
+                     <td v-for="i in 3">
+                      <button @click='sendNumber(i+3)' v-text="i+3"></button>
+                     </td>
+                </tr>
+                <tr>
+                     <td v-for="i in 3">
+                      <button @click='sendNumber(i+6)' v-text="i+6"></button>
+                     </td>
+                </tr>
+                <tr>
+                     <td >
+                      <button @click='sendNumber(0)'>0</button>
+                     </td>
+                     <td>
+			     <button @click='sendBibEnter()'>
+			     <small><strong>
+				<span v-text="'Enter'"></span>
+			     </strong></small>
+			     		</button>
+                     </td>
+                     <td>
+              <button @click='sendMsgTime'>Time</button>
+                     </td>
+                </tr>
+                <tr>
+                     <td colspan=2>
+			     <button @click='sendBibEnter()'>
+			     <small><small><strong>
+				<span v-text="bibtime"></span>
+			     </strong></small></small>
+			     		</button>
+                     </td>
+                     <td>
+                      <button @click='sendClearPreBib()'><</button>
+                     </td>
+                </tr>
+            </table>
+        </div> <!-- end BibTable -->
+        <div class="no-print">
+            GTO:<input  size=10 v-model="gtobib" >
+            <button @click='setBib15'>Bib15</button>
+            Max:<input  size=1 v-model="max_laps" >
+						Sort:
+            <input type="radio" id="bib_finish" value="bib_finish" v-model="bib_sort">
+            <label for="finish">Приход</label>
+            <input type="radio" id="bib_order" value="bib_order" v-model="bib_sort">
+            <label for="w">Возр.</label>
+            Correct:<input  size=2 v-model="correct" ><br>
+            <button @click='sendMsgClear'>Clear</button>
+            <select v-model="offset.h" ><option v-for="i in 60" v-text="i-1"></option></select>
+            <select v-model="offset.m" ><option v-for="i in 60" v-text="i-1"></option></select>
+            <select v-model="offset.s" ><option v-for="i in 60" v-text="i-1"></option></select>
+            <button id="start-button" @click='sendMsgStart'>Start</button>
+            <button @click='sendMsgStop'>Stop</button>
+            <p id="elapsed"><span v-text='elapsed'></span>
+            <button id="time-button" @click='sendMsgTime'>Time</button>
+           <input :ref="'input-base'" size=2 v-model="bibtime" @keyup.enter="sendBibTime" @keyup.space="sendBibTime">
+            </p>
+        </div>
+          <div class="bib-div">
+              <div v-bind:class="[getColors(i),]" @click='sendBib15(i)' style="display:inline-block;height: 110px; width: 150px; margin:3px; padding: 0" v-for="i in sorted_bibs">
+                <strong><span style="float:right" v-text="getRestLaps(i)"></span></strong>
+                <button style="float:left" v-bind:class="[getColors(i),]" v-text="i"></button>
+                <strong><div v-text="getLastTimeByBib(i)"></div></strong>
+                <div v-text="getLapTimeByBib(i)"></div>
+             </div>
+          </div>
+
+        <div class="no-print">
+            <div>
+                <span v-for="time in times">
+                 <!--    <input size=2 @keyup.space="sendMsgTime" v-model="time.bib" :disabled="time.editable == false" @keyup.enter="sendMsgBib(time)">-->
+                     <span v-text="time.time"></span>
+                </span>
+            </div>
+        </div>
+
+       <div class="no-print">
+            <input type="radio"  id="all" value="all" v-model="filterType">
+            <label for="all">Все</label>
+            <input type="radio"  id="absolute" value="absolute" v-model="filterType">
+            <label for="absolute">Абсолют</label>
+            <input type="radio"  id="mw" value="mw" v-model="filterType">
+            <label for="mw">МЖ</label>
+            <input type="radio"  id="cat" value="cat" v-model="filterType">
+            <label for="cat">Дист.</label>
+            <input type="radio"  id="catmw" value="catmw" v-model="filterType">
+            <label for="catmw">ДистМЖ</label><br>DB: <span class="db">{{ db }}</span>
+            <input type="radio"  id="bib" value="bib" v-model="filterType">
+            <label for="bib">№.</label>
+            <input type="radio" checked id="reverse" value="reverse" v-model="filterType">
+            <label for="reverse">Последние</label>
+        </div>
+       <div class="no-print" v-if="filterType == 'catmw' | filterType == 'mw'">
+            <input type="radio" id="m" value="m" v-model="gender">
+            <label for="m">Mужчины</label>
+            <input type="radio" id="w" value="w" v-model="gender">
+            <label for="w">Женщины</label>
+        </div>
+       <div class="no-print" v-if="filterType == 'cat' | filterType == 'catmw'">
+          <select v-model="catSelected">
+            <option v-for="cat in cats" v-text="cat"></option>
+          </select>
+        </div>
+        <div class="no-print" v-if="filterType != 'reverse'">
+          <select v-model="lap">
+              <option v-for="i in 20" v-text="i"></option>
+          </select>
+           №:<input v-model="bib" size=2>
+           Д:<input v-model="searchBib" size=2">
+        </div>
+      <div id="diplom-wrapper" v-if="filterType == 'diploma'">
+        <div id="diplom" >
+            <div v-for="time in diplom">
+          <h5>Награждается:</h5>
+          <h4><span v-text="time.pers.name + ' ' + time.pers.family"></span></h4>
+          Номер: <strong><span v-text="time.bib"></span></strong><br>
+          Дистанция: <strong><span v-text="distance * lap"></span> km</strong><br>
+          Место: <strong><span v-text="time.rank"></span></strong><br>
+          Время: <strong><span v-text="time.time"></span></strong>
+            </div>
+        </div>
+      </div>
+      <div class="prot-itog" v-if="filterType != 'diploma'">
+        <h5 v-if="filterType != 'reverse'">Итоговый протокол: 
+         <span v-if="filterType == 'absolute'">Абсолют</span>
+         <span v-text="genderDisplay[gender]" v-if="filterType == 'mw'"></span>
+         <span v-text="catSelected" v-if="filterType == 'cat'"></span>
+        </h5>
+        <table class="prot-table">
+              <tr  v-for="(time, i) in protocol" >
+                <td v-text="i + 1"></td>
+                <td>
+                  <span v-text="time.pers.cat"></span>
+                </td>
+                <td>
+                  <small><small><small>
+                    <span v-text="time.pers.family + ' ' + time.pers.name" @click="setBibEditableFalse(time.pk)"></span><br>
+                  </small></small></small>
+                </td>
+                 <td v-text="time.bib" v-if="time.editable == false" @click="setBibEditable(time.pk)"></td>
+                 <td v-if="time.editable == true">
+                 <input size=2 v-model="bibtime" @keyup.enter="sendMsgBib(time)">
+                 </td>
+                 <td v-text="getTime(time.time)" v-if="time.editable == false" @click="setBibEditable(time.pk)"></td>
+                 <td v-if="time.editable == true" >
+                 <input size=2 v-model="time.time"@keyup.enter="editTime(time)">
+                 </td>
+                 <td v-text="time.lap" ></td>
+                 <td v-text="getLap(time)" ></td>
+                 <td v-text="max_laps - time.lap" ></td>
+            </tr>
+        </table>
+        </div>
+
+    </div>
+    <script>
+        var app = new Vue({
+            
+            el : '#root',
+
+            data: {
+                ws: '',
+                elapsed : '00:00:00',
+                offset : { h: 0, m: 0, s: 0 },
+                correct : '',
+                bibtime : '',
+                gtobib : "40,14,57,8,3,4,10,90,79,71,28,58",
+                bib15 : {},
+                bib_sort : 'bib_finish',
+                lap_counter : {},
+                max_laps : 10,
+                colors : ['color0','color1','color2','color3','color4','color5','color6','color7','color8',
+                          'color9','color10','color11','color12','color13','color14','color15','color16',],
+                times : [],
+                results : [],
+                latests : [],
+                pers : {},
+                lap : '1',
+                distance : '9',
+                preBibs : [],
+                gender: 'm',
+                filterType: 'reverse',
+                cats: [],
+                catSelected: '',
+                searchBib: '',
+                bib: '',
+                active: false,
+                genderDisplay: { m: 'Mужчины', w: 'Женщины', all: 'Абсолют' },
+            },
+    
+            computed: {
+                sorted_bibs: function() {
+										if (this.bib_sort == 'bib_order') {
+                    return this.bib15.sort((a, b) => parseInt(a) - parseInt(b))
+										}
+										return this.bib15
+                },
+                prefinish: function() {
+                  if (this.pers[this.bibtime] != undefined && this.bibtime != '') {
+                    return this.pers[this.bibtime].family.concat(' ', this.pers[this.bibtime].name);
+                  } else if (this.pers[this.prebib] != undefined && this.prebib != '') {
+                    return this.pers[this.prebib].family.concat(' ', this.pers[this.prebib].name);
+                  } else {
+                    return '';
+                  }
+                },
+                prebib: function() {
+                  return this.preBibs.join('');
+                },
+                protocol: function() {
+                  if (this.filterType == 'bib') {
+                      return this.results.filter(time => time.bib == this.bib);
+                  } else if (this.filterType == 'reverse') {
+                      return this.latests;
+                  } else if (this.filterType == 'catmw') {
+                      return this.results.filter(time => time.pers.gender == this.gender && time.pers.cat == this.catSelected && time.lap == this.lap);
+                  } else if (this.filterType == 'cat') {
+                      return this.results.filter(time => time.pers.cat == this.catSelected && time.lap == this.lap);
+                  } else if (this.filterType == 'mw') {
+                      return this.results.filter(time => time.pers.gender == this.gender && time.lap == this.lap);
+                  } else if (this.filterType == 'absolute') {
+                      return this.results.filter(time => time.lap == this.lap);
+                  } else if (this.filterType == 'all') {
+                      return this.results;
+                  } else {
+                      return this.results;
+                  }
+                },
+                diplom: function() {
+                      if (this.searchBib > 0) {
+                          let s_bib =  this.results.filter(time => time.bib == this.searchBib && time.lap == this.lap)[0];
+                          if (s_bib == undefined) {
+                              return [];
+                          } 
+                          s_bib.rank = this.results.filter(time => time.lap == this.lap && time.pers.gender == s_bib.pers.gender).indexOf(s_bib) + 1;
+                          return [s_bib];
+                        } else {
+                          return [];
+                        }
+                },
+            },
+     
+            created: function () {
+                this.ws =  new WebSocket("ws://{{ server_url }}:{{ server_port }}/bib-time");
+                this.ws.onmessage = function(e) {
+                   message = JSON.parse(e.data);
+                   if (message.action == 'all_times') {
+                        app.pers = message.pers;
+                        app.cats = message.cats;
+                        message.times.forEach(function (lt) {
+                          if (lt.bib === '') { 
+                            app.times.push({ editable: true, lap: lt.lap, pk: lt.pk, time: lt.time, bib: lt.bib });
+                          } else {
+                            let pers = app.getPersByBib(lt.bib);
+                            app.results.push({ editable: false, pers: pers, lap: lt.lap, pk: lt.pk, time: lt.time, bib: lt.bib });
+                          }
+                        });
+                        results_length = app.results.length
+                        let max = results_length + 1
+                        if (max > 10) {
+                          max = 10;
+                        }
+                        for (i=1; i<max; i++) { 
+                          app.latests.push(app.results[results_length - i ]);
+                        }
+                        app.setCursor();
+                    }
+                   if (message.action == 'times') {
+                        let lt = message.last_time;
+                        let pers = app.getPersByBib(lt.bib);
+                        app.times.push({ editable: true, pers: pers, lap: lt.lap, pk: lt.pk, time: lt.time, is_res: false, bib: lt.bib });
+                        //app.setCursor();
+                    }
+                   if (message.action == 'chrono') {
+                        app.elapsed = message.elapsed;
+                    }
+                   if (message.action == 'stop') {
+                        app.elapsed = '00:00:00';
+                    }
+                   if (message.action == 'clear') {
+                        app.times = [];
+                        app.results = [];
+                        app.latests = [];
+                        app.lap_counter = {};
+                    }
+                   if (message.action == 'results') {
+                        let res = app.times.filter(time => time.pk == message.pk)[0];
+                        if (res != undefined) {
+                          app.results.push(app.times.shift())
+                          app.latests.unshift(res);
+                        } else {
+                          res = app.results.filter(time => time.pk == message.pk)[0];
+                        }
+                        res.editable = false;
+                        res.bib = message.bib;
+                        res.pers = app.getPersByBib(res.bib);
+                        res.lap = message.lap;
+                        app.lap_counter[res.bib] = res.lap
+                        if (app.latests.length > 10) {
+                          app.latests.pop();
+                        }
+                    }
+                   if (message.action == 'bibtime') {
+                      let lt = message;
+                      let pers = app.getPersByBib(lt.bib);
+                      app.lap_counter[lt.bib] = lt.lap
+                      let res = { editable: false, pers: pers, lap: lt.lap, pk: lt.pk, time: lt.time, bib: lt.bib };
+                      app.results.push(res);
+                      app.latests.unshift(res);
+                      if (app.latests.length > 10) {
+                        app.latests.pop();
+                      }
+                    }
+                }
+            },
+
+            methods: {
+                sendClearPreBib () {
+                    if (this.bibtime.length != 0) {
+                      this.bibtime = this.bibtime.substring(0, this.bibtime.length - 1);
+                    } 
+                },
+
+                sendBibTime () {
+                    if (this.bibtime.split(' ').join('') == '') {
+                      this.sendMsgTime(); 
+                    } else {
+                      this.sendBibEnter();
+                    }
+                    this.bibtime = '';
+                },
+
+                sendBibEnter () {
+                    if (this.times.length == 0) {
+                      let message = JSON.stringify({ action: 'bibtime', bib: this.bibtime });
+                      this.ws.send(message);
+                      this.preBibs = [];
+                    } else {
+                      this.sendMsgBib(this.times[0])
+                    }
+                    this.setCursor();
+                    app.active = true;
+                },
+                sendMsgBib (time) {
+                    let message = JSON.stringify({ action: 'bib', pk: time.pk, bib: this.bibtime });
+                    this.ws.send(message);
+                },
+                getColors (i) {
+                  let times = this.results.filter(time => time.bib == i);
+                  let lap = 0
+                  if (times.length > 0) {
+                    lap = times[times.length - 1].lap
+                  }
+                  return this.colors[lap]; 
+                },
+                setBib15: function() {
+                    let bibs = this.gtobib.replace(".",",").split(",");
+										this.bib15 = bibs
+                },
+                pushBibToEnd (i) {
+									this.bib15 = this.bib15.filter(bib => parseInt(bib) != parseInt(i))
+									return this.bib15.push(i)
+									//
+                },
+                sendBib15 (i) {
+                  this.sendNumber(i) 
+                  this.sendBibEnter() 
+									this.pushBibToEnd (i) 
+                },
+                getLastTimeByBib (i) {
+                  time = this.getTimeByBib(i)
+                  elapsed = this.elapsed + '.0'
+                  if (time != undefined) {
+                    if (time.lap >= this.max_laps) {
+                      return time.time
+                    } else {
+                      return app.int_to_time(app.time_to_int(elapsed) - app.time_to_int(time.time))
+                    }
+                  }
+                  return elapsed
+                },
+                getLapTimeByBib (i) {
+                  time = this.getTimeByBib(i)
+                  if (time != undefined) {
+                    return this.getLap(time)
+                  }
+                  return '............'
+                },
+                getPredvTimeByBib (i) {
+                  let times = this.results.filter(time => time.bib == i);
+                  if (times.length > 1) {
+                    let predv_time = times[times.length - 2]
+                    return predv_time
+                  }
+                  return undefined
+                },
+                getTimeByBib (i) {
+                  let times = this.results.filter(time => time.bib == i);
+                  if (times.length > 0) {
+                    let last_time = times[times.length - 1]
+                    return last_time
+                  }
+                  return undefined
+                },
+                getRestLaps (i) {
+                  let times = this.results.filter(time => time.bib == i);
+                  let laps_to_go = this.max_laps
+                  if (times.length > 0) {
+                    let last_time = times[times.length - 1]
+                    laps_to_go = this.max_laps - last_time.lap; 
+                  } 
+                  return laps_to_go
+                },
+                sendNumber (i) {
+                    //if (this.times.length == 0) {
+                    this.bibtime = this.bibtime + i;
+                    //} else {
+                    //   this.times[0].bib = this.times[0].bib.concat(i.toString());
+                    //}
+                },
+                
+                getPersByBib (bib) {
+                    let pers = { family: 'Mister', name: 'X', gender: 'all', org: 'Secret' };
+                    if (app.pers[bib] != undefined) { 
+                        pers = app.pers[bib];
+                    }
+                    return pers;
+                },
+                setCursor () {
+                    let a_times = app.times;
+                    if (a_times.length == 0) {
+                        //app.$refs['input-base'].focus();
+                    }
+                    app.bibtime = '';
+                    app.active = false;
+                },
+                setBibEditable (pk) {
+                    app.results.filter(time => time.pk == pk)[0].editable = true;
+                },
+                setBibEditableFalse (pk) {
+                    app.results.filter(time => time.pk == pk)[0].editable = false;
+                },
+                editTime (time) {
+                    let message = JSON.stringify({ action: 'edit_time', bib: time.bib, pk: time.pk, time: time.time });
+                    this.ws.send(message);
+                },
+                sendMsgStart () {
+                    let message = JSON.stringify({ action: 'start', offset: this.offset });
+                    this.ws.send(message);
+                },
+                sendMsgTime () {
+                    let message = JSON.stringify({ action: 'time' });
+                    this.ws.send(message);
+                },
+                sendMsgStop () {
+                    pr = prompt('Вы уверены?', 'НЕТ!');
+                    if (pr == 'Yes') {
+                        let message = JSON.stringify({ action: 'stop' });
+                        this.ws.send(message);
+                    }
+                    this.times = [];
+                },
+                sendMsgClear () {
+                    pr = prompt('Вы уверены?', 'НЕТ!');
+                    if (pr == 'Yes') {
+                        let message = JSON.stringify({ action: 'clear' });
+                        this.ws.send(message);
+                        this.times = []
+                        this.results = []
+                    }
+                },
+                getTime (time) {
+                  if (this.correct == '') {
+                    return time
+                  } else {
+                    return app.int_to_time(app.time_to_int(time) - app.time_to_int(this.correct))
+                  }
+                }, 
+                getLap (time) {
+                  let prev_res = 0 
+                  try {
+                    let prev_time = app.results.filter(t => t.bib == time.bib && t.lap == time.lap - 1)[0]
+                    prev_res = app.time_to_int(prev_time.time)
+                  } catch {
+                  }
+                  return app.int_to_time(app.time_to_int(time.time) - prev_res)
+                }, 
+                time_to_int (time)  {
+                  if (time.length < 9) {
+                    time = `00:${time}`
+                  }
+                  let seconds = time.match(/\:\d\d/g)[1].replace(':','')
+                  let minutes = time.match(/\:\d\d\:/g)[0].replace(':','')
+                  let hours = time.match(/\d\d?\:/g)[0].replace(':','')
+                  let time_int = parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseInt(seconds)
+                  return time_int
+                }, 
+                int_to_time (i_time) {
+                  let hours = i_time / 3600 >> 0
+                  let hr = i_time % 3600
+                  let minutes = hr / 60 >> 0
+                  let seconds = hr % 60
+                  if (hours < 10) {
+                    hours = `0${hours}`
+                  }
+                  if (minutes < 10) {
+                    minutes = `0${minutes}`
+                  }
+                  if (seconds < 10) {
+                    seconds = `0${seconds}`
+                  }
+                  time = `${hours}:${minutes}:${seconds}`
+                  return time
+                }
+
+            },
+        });
+    </script>
+</body>
+</html>
+
