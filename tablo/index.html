@@ -7,13 +7,15 @@
 <style>
  body {background-color: #000; color: #fff; padding: 0; margin: 0 }
  #root { padding: 0; margin: 0 }
- #input-tablo { float: right; } 
- #info { font-size: 1.7em; }
+ #input-tablo { float: right; padding:50px; }} 
+ #info { padding: 0; margin: 0; font-size: 1.7em; }
 </style>
 <body>
     <div id='root'>
 	<pre id="info" v-text="tablo"></pre>
-	<textarea type="textarea" rows="12" id="input-tablo" width="300" v-model="tablo"></textarea>
+	<div id="input-tablo">
+		<textarea type="textarea" rows="12"  width="300" v-model="tablo"></textarea>
+	</div>
     </div>
 <script>
   var app = new Vue({

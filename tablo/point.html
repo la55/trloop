@@ -11,7 +11,8 @@
  #control {  }
  #root { padding: 0; margin: 0 }
  #tablo { display: flex; height: 10rem; }
- .tablo-col { display: flex; padding: 1rem; }
+ .tablo-col { display: flex; padding: 4px; }
+ .sum, .plus, .minus {font-size: 26px}
 </style>
 <body>
 	<div id='root'>
@@ -32,6 +33,8 @@
 			<input type="text" v-model="f3" size="1" name="f3">
 			<input type="text" v-model="f4" size="1" name="f4">
 			<button @click="intFinish()">Finish</button>
+			№: <input type="text" v-model.number="finish" size="1" name="finish">
+			Max: <input type="text" v-model.number="max" size="1" name="max">
 			<br>
 			<button @click="plusTw()">+20</button>
 			<input type="text" v-model="bib" size="1" name="bib">
@@ -39,13 +42,23 @@
 			<button @click="sortBibs()">Sort</button>
 			<button @click="addBib()">Add Player</button>
 			<label for="checkbox">Time</label>
-			<input type="checkbox" id="show_time" v-model="show_time">
+			<input type="checkbox"  v-model="show_time">
 			<table>
+				<tr>
+					<th>Bib</td>
+					<th>Sum</td>
+					<th v-for="m in max" v-text="m"></td>
+					<th>+</td>
+					<th>-</td>
+				</tr>
 				<tr v-for="pl in bibs">
 					<td><input size="1" @change="saveBibs" v-model="pl.bib"></input></td>
-					<td><input size="3" @change="saveBibs"  v-model="pl.family"></input></td>
-					<td><input size="2" @change="saveBibs"  v-model="pl.region"></input></td>
-					<td><input size="1" @change="saveBibs"  v-model.number="pl.points"></input></td>
+					<!--<td><input size="3" @change="saveBibs"  v-model="pl.family"></input></td>
+					<td><input size="2" @change="saveBibs"  v-model="pl.region"></input></td>-->
+					<td><span class="sum" v-text="countSum(pl)"></span></td>
+					<td v-for="m in max"><input size="1"  v-model.number="pl.finish[m]"></input></td>
+					<td><input size="1" v-model.number="pl.plus"></input></td>
+					<td><input size="1" v-model.number="pl.minus"></input></td>
 					<td><button @click="deleteBib(pl.bib)">x</button></td>
 				</tr>
 			</table>
@@ -77,11 +90,10 @@
 		template: `
 				<table>
 					<tr v-for="(p, i) in bibs"">
-						<td v-text="'№' + p.bib"></td>
-						<td>-</td>
+						<td v-text="'№ ' + p.bib"></td>
 						<!--<td v-text="p.family"></td>
 						<td v-text="p.region"></td>-->
-						<td v-text="p.points"></td>
+						<td v-text="' = ' + countSum(p)"></td>
 					</tr>
 				</table>
 		`,
@@ -89,6 +101,13 @@
 			bibs: {
 				required: true
 			}
+		},
+		methods: {
+      countSum: function (p) {
+				const reducer = (accumulator, currentValue) => accumulator + currentValue
+				let sum = p.finish.reduce(reducer) + p.plus * 20 + p.minus * 20 
+				return sum
+      },
 		}
 	})
   var app = new Vue({
@@ -103,6 +122,8 @@
 			offset: 0,
 			bib: 0,
 			bibs: [],
+			finish: 1,
+			max: 10,
 			show_time: 'false',
     },
 
@@ -118,21 +139,26 @@
 
     computed: {
       sorted : function () {
-        return this.bibs.sort((a, b) => b.points - a.points)
+        return this.bibs.sort((a, b) => this.countSum(b) - this.countSum(a))
       },
       tabloone : function () {
 				let ofs = parseInt(this.offset)
 				let max = ofs + 4
-        return this.bibs.slice(ofs,max)
+        return this.sorted.slice(ofs,max)
       },
       tablotwo : function () {
 				let ofs = parseInt(this.offset) + 4
 				let max = ofs + 4
-        return this.bibs.slice(ofs,max)
+        return this.sorted.slice(ofs,max)
       }
     },
 
     methods: {
+      countSum: function (p) {
+				const reducer = (accumulator, currentValue) => accumulator + currentValue
+				let sum = p.finish.reduce(reducer) + p.plus * 20 + p.minus * 20 
+				return sum
+      },
       sortBibs : function () {
         return this.bibs.sort((a, b) => b.points - a.points)
       },
@@ -146,37 +172,63 @@
 			 console.log(this.offset)
 			},
       getByBib: function (bib) {
-	 return this.bibs.filter(p => p.bib == bib)[0]
+				 return this.bibs.filter(p => p.bib == bib)[0]
       },
       plusTw: function () {
-	 p1 = this.getByBib(parseInt(this.bib))
-	 p1.points += 20 
-	 this.bib = ''
-	 this.saveBibs()
-	 this.sortBibs()
+			 p1 = this.getByBib(parseInt(this.bib))
+				if (p1 == undefined) {
+						alert('Undefined bib: ' + this.bib)
+						return false
+				}
+			 p1.points += 20 
+			 p1.plus += 1
+			 this.bib = ''
+			 this.saveBibs()
+			 this.sortBibs()
       },
       minusTw: function () {
-	 p1 = this.getByBib(parseInt(this.bib))
-	 p1.points -= 20 
-	 this.bib = ''
-	 this.saveBibs()
-	 this.sortBibs()
+			 p1 = this.getByBib(parseInt(this.bib))
+				if (p1 == undefined) {
+						alert('Undefined bib: ' + this.bib)
+						return false
+				}
+			 p1.points -= 20 
+			 p1.minus += 1
+			 this.bib = ''
+			 this.saveBibs()
+			 this.sortBibs()
       },
       intFinish: function () {
-	 p1 = this.getByBib(parseInt(this.f1))
-	 p1.points = parseInt(p1.points) + 5
-	 this.f1 = '' 
-	 p2 = this.getByBib(parseInt(this.f2))
-	 p2.points = parseInt(p2.points) + 3
-	 this.f2 = '' 
-	 p3 = this.getByBib(parseInt(this.f3))
-	 p3.points = parseInt(p3.points) + 2
-	 this.f3 = '' 
-	 p4 = this.getByBib(parseInt(this.f4))
-	 p4.points = parseInt(p4.points) + 1
-	 this.f4 = ''
-	 this.saveBibs()
-	 this.sortBibs()
+				 let last = 1
+					if (this.finish == this.max) {
+						last = 2
+					}
+				 p1 = this.getByBib(parseInt(this.f1))
+				 p2 = this.getByBib(parseInt(this.f2))
+				 p3 = this.getByBib(parseInt(this.f3))
+				 p4 = this.getByBib(parseInt(this.f4))
+					let p_list = [p1,p2,p3,p4]
+					for (i in p_list) {
+						if (p_list[i] == undefined) {
+								alert('Undefined pos: ' + (i))
+								return false
+						}
+					}
+				 p1.points = parseInt(p1.points) + 5
+				 this.f1 = '' 
+					p1.finish[this.finish] = 5 * last
+				 p2.points = parseInt(p2.points) + 3 * last
+				 this.f2 = '' 
+					p2.finish[this.finish] = 3 * last
+				 p3.points = parseInt(p3.points) + 2 * last
+				 this.f3 = '' 
+					p3.finish[this.finish] = 2 * last
+				 p4.points = parseInt(p4.points) + 1 * last
+				 this.f4 = ''
+					p4.finish[this.finish] = 1 * last
+				 this.finish += 1
+				 this.saveBibs()
+				 this.sortBibs()
       },
       deleteBib: function (bib) {
 	 this.bibs = this.bibs.filter(p => p.bib != bib)
@@ -187,9 +239,9 @@
 	localStorage.setItem('bibs', JSON.stringify(this.bibs))
       },
       addBib: function () {
-	this.bibs.push({ bib: '', family: '', region: '', points: 0 })	
-	this.sortBibs()
-	this.saveBibs()
+				this.bibs.push({ bib: '', family: '', region: '', points: 0, plus: 0, minus: 0, finish: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] })	
+				this.sortBibs()
+				this.saveBibs()
       }
     }
 
