@@ -7,15 +7,29 @@
 <style>
  body {background-color: #000; color: #fff; padding: 0; margin: 0 }
  #root { padding: 0; margin: 0 }
- #input-tablo { float: right; padding:50px; }} 
- #info { padding: 0; margin: 0; font-size: 1.7em; }
+ #info { width: 1rem; height: 10rem; text-align: center; } 
+ .info {  text-align: center; font-size: 32px; } 
+ #input-tablo { padding: 0; margin-top: 5rem; font-size: 1.7em; }
+	input {font-size: 40px; }
 </style>
 <body>
     <div id='root'>
-	<pre id="info" v-text="tablo"></pre>
-	<div id="input-tablo">
-		<textarea type="textarea" rows="12"  width="300" v-model="tablo"></textarea>
-	</div>
+			<div id="info">
+				<span class="info" v-for="t in tablo" v-text="tablo[0]"></span><br>
+				<span class="info"  v-for="t in tablo" v-text="tablo[1]"></span><br>
+				<span class="info"  v-for="t in tablo" v-text="tablo[2]"></span><br>
+				<span class="info"  v-for="t in tablo" v-text="tablo[3]"></span><br>
+				<span class="info"  v-for="t in tablo" v-text="tablo[4]"></span><br>
+				<span class="info"  v-for="t in tablo" v-text="tablo[5]"></span>
+			</div>
+			<div id="input-tablo">
+				<input type="text" v-model="tablo[0]"><br>
+				<input type="text" v-model="tablo[1]"><br>
+				<input type="text" v-model="tablo[2]"><br>
+				<input type="text" v-model="tablo[3]"><br>
+				<input type="text" v-model="tablo[4]"><br>
+				<input type="text" v-model="tablo[5]">
+			</div>
     </div>
 <script>
   var app = new Vue({
@@ -23,7 +37,7 @@
     el : '#root',
 
     data: {
-        tablo : '',
+        tablo : [],
     },
 
   });

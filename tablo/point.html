@@ -166,7 +166,7 @@
         return this.bibs.sort((a, b) => parseInt(a.bib) - parseInt(b.bib))
       },
       sortPoints : function () {
-        return this.bibs.sort((a, b) => b.points - a.points)
+        return this.bibs.sort((a, b) => this.countSum(b) - this.countSum(a))
       },
 			changeOffset: function () {
 			 let ofs = parseInt(this.offset)
