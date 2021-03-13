@@ -162,6 +162,14 @@ class IndexPageHandler(tornado.web.RequestHandler):
             server_url=options.host,
             server_port=options.port
         )
+ 
+class PointRacePageHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        self.render("point.html",
+            server_url=options.host,
+            server_port=options.port
+        )
        
  
 class Application(tornado.web.Application):
@@ -174,6 +182,7 @@ class Application(tornado.web.Application):
 
         handlers = [
             (r'/', IndexPageHandler),
+            (r'/point/', PointRacePageHandler),
             (r'/socket', WebSocketHandler),
             (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': settings['static_path']}),
         ]
@@ -191,7 +200,7 @@ if __name__ == '__main__':
     workers = [
         Thread(target=getData),
         Thread(target=sendToAll),
-        Thread(target=saveRes),
+        #Thread(target=saveRes),
     ]
     for w in workers:
         w.daemon = True
