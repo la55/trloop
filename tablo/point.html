@@ -59,7 +59,7 @@
 					<td><input size="2" @change="saveBibs"  v-model="pl.region"></input></td>-->
 					<td><span class="sum" v-text="countSum(pl)"></span></td>
 					<td v-for="m in max"><input size="1"  v-model.number="pl.finish[m]"></input></td>
-					<td><input size="1" v-model.number="pl.plus"></input></td>
+					<td><input size="1" v-model.number="pl.plus" ></input></td>
 					<td><input size="1" v-model.number="pl.minus"></input></td>
 					<td><button @click="deleteBib(pl.bib)">x</button></td>
 				</tr>
@@ -108,7 +108,7 @@
 		methods: {
       countSum: function (p) {
 				const reducer = (accumulator, currentValue) => accumulator + currentValue
-				let sum = p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20 
+				let sum = parseInt(p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20)
 				return sum
       },
 		}
@@ -159,14 +159,15 @@
     methods: {
       countSum: function (p) {
 				const reducer = (accumulator, currentValue) => accumulator + currentValue
-				let sum = p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20 
+				let sum = parseInt(p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20)
 				return sum
       },
       sortBibs : function () {
         return this.bibs.sort((a, b) => parseInt(a.bib) - parseInt(b.bib))
       },
       sortPoints : function () {
-        return this.bibs.sort((a, b) => b.points - a.points)
+        this.bibs = this.bibs.sort((a, b) => this.countSum(b) - this.countSum(a))
+        this.saveBibs()
       },
 			changeOffset: function () {
 			 let ofs = parseInt(this.offset)
