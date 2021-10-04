@@ -35,6 +35,8 @@
 			<button @click="intFinish()">Finish</button>
 			№: <input type="text" v-model.number="finish" size="1" name="finish">
 			Max: <input type="text" v-model.number="max" size="1" name="max">
+			Tempo: <input type="text" v-model.number="tempo" size="1" name="tempo">
+			<button @click="setTempo()">Tempo</button>
 			<br>
 			<button @click="plusTw()">+20</button>
 			<input type="text" v-model="bib" size="1" name="bib">
@@ -59,7 +61,7 @@
 					<td><input size="2" @change="saveBibs"  v-model="pl.region"></input></td>-->
 					<td><span class="sum" v-text="countSum(pl)"></span></td>
 					<td v-for="m in max"><input size="1"  v-model.number="pl.finish[m]"></input></td>
-					<td><input size="1" v-model.number="pl.plus" ></input></td>
+					<td><input size="1" v-model.number="pl.plus"></input></td>
 					<td><input size="1" v-model.number="pl.minus"></input></td>
 					<td><button @click="deleteBib(pl.bib)">x</button></td>
 				</tr>
@@ -108,7 +110,7 @@
 		methods: {
       countSum: function (p) {
 				const reducer = (accumulator, currentValue) => accumulator + currentValue
-				let sum = parseInt(p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20)
+				let sum = p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20 
 				return sum
       },
 		}
@@ -127,12 +129,13 @@
 			bibs: [],
 			finish: 1,
 			max: 10,
+			tempo: 0,
 			show_time: 'false',
     },
 
     created: function () {
 	    //setInterval(this.changeOffset, 3000)
-	    let bibs = localStorage.getItem('bibs', [])
+	    let bibs = localStorage.getItem('bibs_tempo', [])
 	    if (bibs == null) {
 			this.bibs = []
 				} else {
@@ -157,17 +160,26 @@
     },
 
     methods: {
+      setTempo: function () {
+				let racer = this.getByBib(parseInt(this.tempo))
+				if (racer == undefined) {
+						alert('Undefined bib: ' + this.tempo)
+						return false
+				}
+				racer.finish[0] += 1
+				this.sortPoints()
+				this.saveBibs()
+			},
       countSum: function (p) {
 				const reducer = (accumulator, currentValue) => accumulator + currentValue
-				let sum = parseInt(p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20)
+				let sum = p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20 
 				return sum
       },
       sortBibs : function () {
         return this.bibs.sort((a, b) => parseInt(a.bib) - parseInt(b.bib))
       },
       sortPoints : function () {
-        this.bibs = this.bibs.sort((a, b) => this.countSum(b) - this.countSum(a))
-        this.saveBibs()
+        return this.bibs.sort((a, b) => this.countSum(b) - this.countSum(a))
       },
 			changeOffset: function () {
 			 let ofs = parseInt(this.offset)
@@ -242,7 +254,7 @@
 	 this.saveBibs()
       },
       saveBibs: function () {
-	localStorage.setItem('bibs', JSON.stringify(this.bibs))
+	localStorage.setItem('bibs_tempo', JSON.stringify(this.bibs))
       },
       addBib: function () {
 				this.bibs.push({ bib: '', family: '', region: '', points: 0, plus: 0, minus: 0, finish: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] })	

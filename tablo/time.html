@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Point race</title>
+    <script src="vue.min.js"></script>
+</head>
+<style>
+ body {background-color: #000; color: #fff; padding: 0; margin: 0 }
+ table td {padding: 2; margin: 0 }
+ #root { padding: 0; margin: 0 }
+</style>
+<body>
+	<div id='root'>
+		<div v-if="show_time">
+		<timenow></timenow>
+		</div>
+	</div> <!-- Root -->
+<script>
+	Vue.component('timenow', {
+		template: `
+			<div class="timenow">
+				<span v-text="now"></span>
+				<br><br>
+			</div>
+		`,
+		data () {
+			return {
+				now: '15.04.00'
+			}
+		},
+    created: function () {
+	    setInterval(this.getTime, 1000)
+		},
+    methods: {
+      getTime : function () {
+				let d = new Date()
+				let hours = d.getHours() 
+				if (hours < 10) {
+					hours = '0' + hours
+				}
+				let minutes = d.getMinutes() 
+				if (minutes < 10) {
+					minutes = '0' + minutes
+				}
+				let seconds = d.getSeconds()
+				if (seconds < 10) {
+					seconds = '0' + seconds
+				}
+				this.now =  hours + ':' + minutes + ':' + seconds
+      }
+		}
+	})
+
+  var app = new Vue({
+    
+    el : '#root',
+
+    data: {
+			show_time: 'false',
+    }
+
+  });
+</script>
+</body>
+</html>
+

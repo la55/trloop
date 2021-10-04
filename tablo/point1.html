@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Point race</title>
+    <script src="vue.min.js"></script>
+</head>
+<style>
+ body {background-color: #000; color: #fff; padding: 0; margin: 0 }
+ table td {padding: 2; margin: 0 }
+ input, button {font-size: 24px;  }
+ #control { margin-top: 16rem; margin-bottom: 16rem;  }
+ #root { padding: 0; margin: 0 }
+ #tablo { display: flex; height: 15rem; width: 100%; z-index: 1001; position: fixed; top: 0; background-color: black; color: white; }
+ .tablo-col { display: flex; padding: 4px; }
+ .sum, .plus, .minus {font-size: 26px}
+</style>
+<body>
+	<div id='root'>
+		<div v-if="show_time">
+<!--		<timenow></timenow>-->
+		</div>
+		<div id="tablo">
+	    <div class="tablo-col">
+				<tablotable :bibs="tabloone"></tablotable>
+			</div>
+	    <div class="tablo-col">
+				<tablotable :bibs="tablotwo"></tablotable>
+			</div>
+		</div><!-- #tablo -->
+		<div id="control" class="control">
+			<input type="text" v-model="f1" size="1" name="f1">
+			<input type="text" v-model="f2" size="1" name="f2">
+			<input type="text" v-model="f3" size="1" name="f3">
+			<input type="text" v-model="f4" size="1" name="f4">
+			<button @click="intFinish()">Finish</button>
+			№: <input type="text" v-model.number="finish" size="1" name="finish">
+			Max: <input type="text" v-model.number="max" size="1" name="max">
+			<br>
+			<button @click="plusTw()">+20</button>
+			<input type="text" v-model="bib" size="1" name="bib">
+			<button @click="minusTw()">-20</button>
+			<button @click="sortBibs()">Sort Bib</button>
+			<button @click="sortPoints()">Sort Points</button>
+			<button @click="addBib()">Add Player</button>
+			<label for="checkbox">Time</label>
+			<input type="checkbox"  v-model="show_time">
+			<button @click="changeOffset()">Next</button>
+			<table>
+				<tr>
+					<th>Bib</td>
+					<th>Sum</td>
+					<th v-for="m in max" v-text="m"></td>
+					<th>+</td>
+					<th>-</td>
+				</tr>
+				<tr v-for="pl in bibs">
+					<td><input size="1" @change="saveBibs" v-model="pl.bib"></input></td>
+					<!--<td><input size="3" @change="saveBibs"  v-model="pl.family"></input></td>
+					<td><input size="2" @change="saveBibs"  v-model="pl.region"></input></td>-->
+					<td><span class="sum" v-text="countSum(pl)"></span></td>
+					<td v-for="m in max"><input size="1"  v-model.number="pl.finish[m]"></input></td>
+					<td><input size="1" v-model.number="pl.plus"></input></td>
+					<td><input size="1" v-model.number="pl.minus"></input></td>
+					<td><button @click="deleteBib(pl.bib)">x</button></td>
+				</tr>
+			</table>
+		</div><!-- Control -->
+	</div> <!-- Root -->
+<script>
+	Vue.component('timenow', {
+		template: `
+			<div class="timenow">
+				<span v-text="now"></span>
+				<br><br>
+			</div>
+		`,
+		data () {
+			return {
+				now: '15.04.00'
+			}
+		},
+    created: function () {
+	    setInterval(this.getTime, 1000)
+		},
+    methods: {
+      getTime : function () {
+				let d = new Date()
+				this.now =  d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds()
+      },
+		}
+	})
+	Vue.component('tablotable', {
+		template: `
+				<table>
+					<tr v-for="(p, i) in bibs"">
+						<td v-text="'№ ' + p.bib"></td>
+						<!--<td v-text="p.family"></td>
+						<td v-text="p.region"></td>-->
+						<td v-text="' = ' + countSum(p)"></td>
+					</tr>
+				</table>
+		`,
+		props: {
+			bibs: {
+				required: true
+			}
+		},
+		methods: {
+      countSum: function (p) {
+				const reducer = (accumulator, currentValue) => accumulator + currentValue
+				let sum = p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20 
+				return sum
+      },
+		}
+	})
+  var app = new Vue({
+    
+    el : '#root',
+
+    data: {
+			f1: 0,
+			f2: 0,
+			f3: 0,
+			f4: 0,
+			offset: 0,
+			bib: 0,
+			bibs: [],
+			finish: 1,
+			max: 10,
+			show_time: 'false',
+    },
+
+    created: function () {
+	    //setInterval(this.changeOffset, 3000)
+	    let bibs = localStorage.getItem('bibs', [])
+	    if (bibs == null) {
+			this.bibs = []
+				} else {
+			this.bibs = JSON.parse(bibs)
+				}
+    },
+
+    computed: {
+      sorted : function () {
+        return this.bibs.sort((a, b) => parseInt(a.bib) - parseInt(b.bib))
+      },
+      tabloone : function () {
+				let ofs = parseInt(this.offset)
+				let max = ofs + 4
+        return this.bibs.slice(ofs,max)
+      },
+      tablotwo : function () {
+				let ofs = parseInt(this.offset) + 4
+				let max = ofs + 4
+        return this.bibs.slice(ofs,max)
+      }
+    },
+
+    methods: {
+      countSum: function (p) {
+				const reducer = (accumulator, currentValue) => accumulator + currentValue
+				let sum = p.finish.reduce(reducer) + p.plus * 20 - p.minus * 20 
+				return sum
+      },
+      sortBibs : function () {
+        return this.bibs.sort((a, b) => parseInt(a.bib) - parseInt(b.bib))
+      },
+      sortPoints : function () {
+        return this.bibs.sort((a, b) => this.countSum(b) - this.countSum(a))
+      },
+			changeOffset: function () {
+			 let ofs = parseInt(this.offset)
+			 ofs += 8
+			 if (ofs >= this.bibs.length) {
+				ofs = 0
+			 }
+			 this.offset = ofs
+			 console.log(this.offset)
+			},
+      getByBib: function (bib) {
+				 return this.bibs.filter(p => p.bib == bib)[0]
+      },
+      plusTw: function () {
+			 p1 = this.getByBib(parseInt(this.bib))
+				if (p1 == undefined) {
+						alert('Undefined bib: ' + this.bib)
+						return false
+				}
+			 p1.points += 20 
+			 p1.plus += 1
+			 this.bib = ''
+			 this.sortPoints()
+			 this.saveBibs()
+      },
+      minusTw: function () {
+			 p1 = this.getByBib(parseInt(this.bib))
+				if (p1 == undefined) {
+						alert('Undefined bib: ' + this.bib)
+						return false
+				}
+			 p1.points -= 20 
+			 p1.minus += 1
+			 this.bib = ''
+			 this.sortPoints()
+			 this.saveBibs()
+      },
+      intFinish: function () {
+				 let last = 1
+					if (this.finish == this.max) {
+						last = 2
+					}
+				 p1 = this.getByBib(parseInt(this.f1))
+				 p2 = this.getByBib(parseInt(this.f2))
+				 p3 = this.getByBib(parseInt(this.f3))
+				 p4 = this.getByBib(parseInt(this.f4))
+				let p_list = [p1,p2,p3,p4]
+					for (i in p_list) {
+						if (p_list[i] == undefined) {
+								alert('Undefined pos: ' + (i))
+								return false
+						}
+				}
+				 p1.points = parseInt(p1.points) + 5
+				 this.f1 = '' 
+					p1.finish[this.finish] = 5 * last
+				 p2.points = parseInt(p2.points) + 3 * last
+				 this.f2 = '' 
+					p2.finish[this.finish] = 3 * last
+				 p3.points = parseInt(p3.points) + 2 * last
+				 this.f3 = '' 
+					p3.finish[this.finish] = 2 * last
+				 p4.points = parseInt(p4.points) + 1 * last
+				 this.f4 = ''
+					p4.finish[this.finish] = 1 * last
+				 this.finish += 1
+			 this.sortPoints()
+			 this.saveBibs()
+      },
+      deleteBib: function (bib) {
+	 this.bibs = this.bibs.filter(p => p.bib != bib)
+	 this.saveBibs()
+      },
+      saveBibs: function () {
+	localStorage.setItem('bibs', JSON.stringify(this.bibs))
+      },
+      addBib: function () {
+				this.bibs.push({ bib: '', family: '', region: '', points: 0, plus: 0, minus: 0, finish: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] })	
+				this.saveBibs()
+      }
+    }
+
+  });
+</script>
+</body>
+</html>
+
